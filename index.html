@@ -121,9 +121,10 @@
   .doctors-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:20px;}
   .doctor-card{background:#fff;border-radius:var(--radius);overflow:hidden;box-shadow:0 2px 20px rgba(31,26,22,0.07);transition:all 0.3s;display:flex;flex-direction:column;}
   .doctor-card:hover{transform:translateY(-4px);box-shadow:0 10px 40px rgba(31,26,22,0.13);}
-  .doctor-photo{height:240px;background:linear-gradient(165deg,#efe4d6 0%,#e0d0bb 100%);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-  .doctor-photo::before{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,transparent 55%,rgba(31,26,22,0.1) 100%);}
+  .doctor-photo{height:280px;background:linear-gradient(165deg,#efe4d6 0%,#e0d0bb 100%);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .doctor-photo::before{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,transparent 55%,rgba(31,26,22,0.1) 100%);z-index:1;}
   .doctor-photo svg{position:relative;z-index:1;}
+  .doctor-photo img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block;}
   .doctor-info{padding:18px 16px 16px;flex:1;display:flex;flex-direction:column;}
   .doctor-info-header{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex:1;}
   .doctor-name{font-family:var(--serif);font-size:15px;font-weight:500;color:var(--brown);line-height:1.3;margin-bottom:5px;}
@@ -139,16 +140,13 @@
   .cases-wrapper{position:relative;}
   .cases-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;}
   .case-card{background:#fff;border-radius:var(--radius);overflow:hidden;box-shadow:0 2px 20px rgba(31,26,22,0.07);}
-  .case-images{display:grid;grid-template-columns:1fr 1fr;height:200px;position:relative;}
-  .case-img{position:relative;overflow:hidden;}
-  .case-img-before{background:linear-gradient(135deg,#c8b5a0 0%,#b09880 100%);}
-  .case-img-after{background:linear-gradient(135deg,#e8ddd0 0%,#d4c4b0 100%);}
-  .case-label{position:absolute;top:12px;left:12px;font-size:9px;letter-spacing:2px;text-transform:uppercase;background:rgba(31,26,22,0.6);color:#fff;padding:4px 8px;font-weight:500;}
-  .case-info{padding:22px;}
+  .case-photo{width:100%;overflow:hidden;}
+  .case-photo img{width:100%;height:auto;display:block;}
+  .case-info{padding:18px 22px 22px;}
   .case-title{font-family:var(--serif);font-size:20px;font-weight:500;color:var(--brown);margin-bottom:6px;}
   .case-desc{font-size:13px;color:var(--gray-brown);margin-bottom:12px;font-weight:300;line-height:1.6;}
   .case-doctor{font-size:11px;color:var(--gold);letter-spacing:1px;}
-  .cases-nav{display:flex;align-items:center;justify-content:center;gap:24px;margin-top:40px;}
+  .cases-nav{display:flex;align-items:center;justify-content:center;gap:24px;margin-top:36px;}
   .cases-arrow{width:44px;height:44px;border:1px solid rgba(196,154,85,0.5);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;background:transparent;transition:all 0.3s;}
   .cases-arrow:hover{background:var(--gold);border-color:var(--gold);}
   .cases-arrow:hover svg{stroke:#fff;}
@@ -503,11 +501,7 @@
       <!-- Олійник Ігор Євгенійович — хірург-стоматолог, імплантолог, ортопед -->
       <div class="doctor-card">
         <div class="doctor-photo">
-          <svg viewBox="0 0 120 200" width="110" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="60" cy="65" r="38" fill="#d4bfa8" fill-opacity="0.65" stroke="#b09878" stroke-width="0.8"/>
-            <text x="60" y="75" text-anchor="middle" font-size="23" fill="#7a6b5c" font-family="Georgia,serif" font-weight="500" letter-spacing="3">ОІ</text>
-            <path d="M10 192 C10 158 30 144 60 144 C90 144 110 158 110 192" fill="#d4bfa8" fill-opacity="0.45" stroke="#b09878" stroke-width="0.8"/>
-          </svg>
+          <img src="doctors/oliynyk.png" alt="Олійник Ігор Євгенійович">
         </div>
         <div class="doctor-info">
           <div class="doctor-info-header">
@@ -523,11 +517,7 @@
       <!-- Рибін Олександр Володимирович — терапевт-ортопед -->
       <div class="doctor-card">
         <div class="doctor-photo" style="background:linear-gradient(165deg,#e8ddd0 0%,#d8ccbe 100%)">
-          <svg viewBox="0 0 120 200" width="110" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="60" cy="65" r="38" fill="#ccb89e" fill-opacity="0.65" stroke="#a89070" stroke-width="0.8"/>
-            <text x="60" y="75" text-anchor="middle" font-size="23" fill="#7a6b5c" font-family="Georgia,serif" font-weight="500" letter-spacing="3">РО</text>
-            <path d="M10 192 C10 158 30 144 60 144 C90 144 110 158 110 192" fill="#ccb89e" fill-opacity="0.45" stroke="#a89070" stroke-width="0.8"/>
-          </svg>
+          <img src="doctors/rybin.png" alt="Рибін Олександр Володимирович">
         </div>
         <div class="doctor-info">
           <div class="doctor-info-header">
@@ -543,11 +533,7 @@
       <!-- Соколова Анастасія Сергіївна — медична сестра -->
       <div class="doctor-card doctor-card--nurse">
         <div class="doctor-photo" style="background:linear-gradient(165deg,#f0e8dc 0%,#e2d6c6 100%)">
-          <svg viewBox="0 0 120 200" width="110" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="60" cy="65" r="38" fill="#ddd0bc" fill-opacity="0.65" stroke="#c0aba8" stroke-width="0.8"/>
-            <text x="60" y="75" text-anchor="middle" font-size="23" fill="#8a7c70" font-family="Georgia,serif" font-weight="400" letter-spacing="3">СА</text>
-            <path d="M10 192 C10 158 30 144 60 144 C90 144 110 158 110 192" fill="#ddd0bc" fill-opacity="0.45" stroke="#c0aba8" stroke-width="0.8"/>
-          </svg>
+          <img src="doctors/sokolova.png" alt="Соколова Анастасія Сергіївна">
         </div>
         <div class="doctor-info">
           <div class="doctor-info-header">
@@ -562,11 +548,7 @@
       <!-- Сідих Катерина Іванівна — медична сестра -->
       <div class="doctor-card doctor-card--nurse">
         <div class="doctor-photo" style="background:linear-gradient(165deg,#ede4d6 0%,#dfd2c2 100%)">
-          <svg viewBox="0 0 120 200" width="110" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="60" cy="65" r="38" fill="#ddd0bc" fill-opacity="0.65" stroke="#c0aba8" stroke-width="0.8"/>
-            <text x="60" y="75" text-anchor="middle" font-size="23" fill="#8a7c70" font-family="Georgia,serif" font-weight="400" letter-spacing="3">СК</text>
-            <path d="M10 192 C10 158 30 144 60 144 C90 144 110 158 110 192" fill="#ddd0bc" fill-opacity="0.45" stroke="#c0aba8" stroke-width="0.8"/>
-          </svg>
+          <img src="doctors/sidykh.png" alt="Сідих Катерина Іванівна">
         </div>
         <div class="doctor-info">
           <div class="doctor-info-header">
@@ -581,11 +563,7 @@
       <!-- Левченко Ірина Михайлівна — медична сестра -->
       <div class="doctor-card doctor-card--nurse">
         <div class="doctor-photo" style="background:linear-gradient(165deg,#eae0d2 0%,#dcd0be 100%)">
-          <svg viewBox="0 0 120 200" width="110" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="60" cy="65" r="38" fill="#ddd0bc" fill-opacity="0.65" stroke="#c0aba8" stroke-width="0.8"/>
-            <text x="60" y="75" text-anchor="middle" font-size="23" fill="#8a7c70" font-family="Georgia,serif" font-weight="400" letter-spacing="3">ЛІ</text>
-            <path d="M10 192 C10 158 30 144 60 144 C90 144 110 158 110 192" fill="#ddd0bc" fill-opacity="0.45" stroke="#c0aba8" stroke-width="0.8"/>
-          </svg>
+          <img src="doctors/levchenko.png" alt="Левченко Ірина Михайлівна">
         </div>
         <div class="doctor-info">
           <div class="doctor-info-header">
@@ -609,78 +587,101 @@
     <div class="cases-grid">
 
       <div class="case-card">
-        <div class="case-images">
-          <div class="case-img case-img-before">
-            <span class="case-label">ДО</span>
-            <svg viewBox="0 0 200 200" width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg" style="opacity:0.5">
-              <ellipse cx="100" cy="120" rx="70" ry="30" fill="#b09880"/>
-              <ellipse cx="80" cy="105" rx="15" ry="20" fill="#c8b09a"/>
-              <ellipse cx="100" cy="102" rx="12" ry="20" fill="#c0a890"/>
-              <ellipse cx="120" cy="105" rx="14" ry="19" fill="#bda88a"/>
-            </svg>
-          </div>
-          <div class="case-img case-img-after">
-            <span class="case-label" style="left:auto;right:12px">ПІСЛЯ</span>
-            <svg viewBox="0 0 200 200" width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg" style="opacity:0.5">
-              <ellipse cx="100" cy="120" rx="70" ry="30" fill="#d4c0a8"/>
-              <ellipse cx="80" cy="105" rx="15" ry="20" fill="#e8ddd0"/>
-              <ellipse cx="100" cy="102" rx="12" ry="20" fill="#f0e8dc"/>
-              <ellipse cx="120" cy="105" rx="14" ry="19" fill="#ece0d0"/>
-            </svg>
-          </div>
+        <div class="case-photo">
+          <img src="cases/case-1.jpg" alt="Кейс 1">
         </div>
         <div class="case-info">
           <div class="case-title">Вініри E-max</div>
           <p class="case-desc">Відновлення форми та кольору зубів</p>
-          <div class="case-doctor">Лікар: Іван Петренко</div>
+          <div class="case-doctor">Лікар: Олійник І.Є.</div>
         </div>
       </div>
 
       <div class="case-card">
-        <div class="case-images">
-          <div class="case-img case-img-before">
-            <span class="case-label">ДО</span>
-            <svg viewBox="0 0 200 200" width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg" style="opacity:0.4">
-              <ellipse cx="100" cy="115" rx="65" ry="28" fill="#9a8070"/>
-              <rect x="50" y="90" width="100" height="40" rx="4" fill="#b09880" opacity="0.6"/>
-            </svg>
-          </div>
-          <div class="case-img case-img-after">
-            <span class="case-label" style="left:auto;right:12px">ПІСЛЯ</span>
-            <svg viewBox="0 0 200 200" width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg" style="opacity:0.4">
-              <ellipse cx="100" cy="115" rx="65" ry="28" fill="#cbbca8"/>
-              <rect x="50" y="90" width="100" height="40" rx="4" fill="#e8ddd0" opacity="0.8"/>
-            </svg>
-          </div>
+        <div class="case-photo">
+          <img src="cases/case-2.jpg" alt="Кейс 2">
         </div>
         <div class="case-info">
-          <div class="case-title">Імплантація All-on-4</div>
+          <div class="case-title">Імплантація</div>
           <p class="case-desc">Повне відновлення зубного ряду</p>
-          <div class="case-doctor">Лікар: Іван Петренко</div>
+          <div class="case-doctor">Лікар: Олійник І.Є.</div>
         </div>
       </div>
 
       <div class="case-card">
-        <div class="case-images">
-          <div class="case-img case-img-before">
-            <span class="case-label">ДО</span>
-            <svg viewBox="0 0 200 200" width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg" style="opacity:0.45">
-              <ellipse cx="100" cy="120" rx="68" ry="28" fill="#b09880"/>
-              <path d="M48 105 Q100 88 152 105" stroke="#9a8070" stroke-width="2" fill="none"/>
-            </svg>
-          </div>
-          <div class="case-img case-img-after">
-            <span class="case-label" style="left:auto;right:12px">ПІСЛЯ</span>
-            <svg viewBox="0 0 200 200" width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg" style="opacity:0.45">
-              <ellipse cx="100" cy="120" rx="68" ry="28" fill="#d4c4b0"/>
-              <path d="M48 108 Q100 95 152 108" stroke="#bba898" stroke-width="2" fill="none"/>
-            </svg>
-          </div>
+        <div class="case-photo">
+          <img src="cases/case-3.jpg" alt="Кейс 3">
         </div>
         <div class="case-info">
-          <div class="case-title">Ортодонтичне лікування</div>
-          <p class="case-desc">Вирівнювання зубів брекет-системою</p>
-          <div class="case-doctor">Лікар: Максим Шевченко</div>
+          <div class="case-title">Естетична реставрація</div>
+          <p class="case-desc">Відновлення та вирівнювання зубів</p>
+          <div class="case-doctor">Лікар: Рибін О.В.</div>
+        </div>
+      </div>
+
+      <div class="case-card">
+        <div class="case-photo">
+          <img src="cases/case-4.jpg" alt="Кейс 4">
+        </div>
+        <div class="case-info">
+          <div class="case-title">Коронки на імпланти</div>
+          <p class="case-desc">Відновлення відсутніх зубів</p>
+          <div class="case-doctor">Лікар: Олійник І.Є.</div>
+        </div>
+      </div>
+
+      <div class="case-card">
+        <div class="case-photo">
+          <img src="cases/case-5.jpg" alt="Кейс 5">
+        </div>
+        <div class="case-info">
+          <div class="case-title">Відбілювання</div>
+          <p class="case-desc">Професійне освітлення зубної емалі</p>
+          <div class="case-doctor">Лікар: Рибін О.В.</div>
+        </div>
+      </div>
+
+      <div class="case-card">
+        <div class="case-photo">
+          <img src="cases/case-6.jpg" alt="Кейс 6">
+        </div>
+        <div class="case-info">
+          <div class="case-title">Комплексне лікування</div>
+          <p class="case-desc">Повне відновлення посмішки</p>
+          <div class="case-doctor">Лікар: Олійник І.Є.</div>
+        </div>
+      </div>
+
+      <div class="case-card">
+        <div class="case-photo">
+          <img src="cases/case-7.jpg" alt="Кейс 7">
+        </div>
+        <div class="case-info">
+          <div class="case-title">Ортодонтія</div>
+          <p class="case-desc">Вирівнювання зубів</p>
+          <div class="case-doctor">Лікар: Рибін О.В.</div>
+        </div>
+      </div>
+
+      <div class="case-card">
+        <div class="case-photo">
+          <img src="cases/case-8.jpg" alt="Кейс 8">
+        </div>
+        <div class="case-info">
+          <div class="case-title">Реставрація зубів</div>
+          <p class="case-desc">Відновлення пошкоджених зубів</p>
+          <div class="case-doctor">Лікар: Рибін О.В.</div>
+        </div>
+      </div>
+
+      <div class="case-card">
+        <div class="case-photo">
+          <img src="cases/case-9.jpg" alt="Кейс 9">
+        </div>
+        <div class="case-info">
+          <div class="case-title">Дизайн посмішки</div>
+          <p class="case-desc">Комплексне естетичне лікування</p>
+          <div class="case-doctor">Лікар: Олійник І.Є.</div>
         </div>
       </div>
 
