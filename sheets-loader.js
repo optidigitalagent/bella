@@ -21,8 +21,8 @@
 (function (win) {
 
   var SPREADSHEET_ID = '1O5KDSudkOZNILi-P_HUepXzI_ab6PoCvvD7WxsVx6ko';
-  var PRICE_SHEET    = 'Прайс';
-  var DOCTORS_SHEET  = 'Лікарі';
+  var PRICE_SHEET    = 'ПРАЙС';
+  var DOCTORS_SHEET  = 'ЛІКАРІ';
 
   var READY = SPREADSHEET_ID !== 'PASTE_YOUR_SPREADSHEET_ID_HERE';
 
@@ -92,12 +92,14 @@
   /* ── Конвертує будь-яке посилання Google Drive у пряме посилання на фото ── */
   function fixPhotoUrl(url) {
     if (!url) return '';
-    // https://drive.google.com/file/d/ID/view...
-    var m = url.match(/drive\.google\.com\/file\/d\/([^/?]+)/);
-    if (m) return 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w600';
-    // https://drive.google.com/open?id=ID
+    var id = null;
+    var m1 = url.match(/drive\.google\.com\/file\/d\/([^/?]+)/);
+    if (m1) id = m1[1];
     var m2 = url.match(/drive\.google\.com\/open\?id=([^&]+)/);
-    if (m2) return 'https://drive.google.com/thumbnail?id=' + m2[1] + '&sz=w600';
+    if (m2) id = m2[1];
+    var m3 = url.match(/[?&]id=([^&]+)/);
+    if (!id && m3) id = m3[1];
+    if (id) return 'https://lh3.googleusercontent.com/d/' + id;
     return url;
   }
 
