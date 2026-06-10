@@ -11,11 +11,16 @@
 
    Лист «Лікарі» — 3 стовпці:
      A: Імʼя   B: Спеціалізація   C: Фото URL
+
+   Як додати фото лікаря:
+   1. Завантажте фото на Google Drive
+   2. Правою кнопкою → «Поділитися» → «Усі, хто має посилання» → Готово
+   3. Натисніть «Копіювати посилання» і вставте його в стовпець C — сайт сам все зробить
    ═══════════════════════════════════════════════════════════════════════ */
 
 (function (win) {
 
-  var SPREADSHEET_ID = '1C5ivxrO_zhhopDE-Xg888GmMCXURgkRm8TzY8dCuJFE';
+  var SPREADSHEET_ID = '1O5KDSudkOZNILi-P_HUepXzI_ab6PoCvvD7WxsVx6ko';
   var PRICE_SHEET    = 'Прайс';
   var DOCTORS_SHEET  = 'Лікарі';
 
@@ -84,6 +89,18 @@
       .filter(function (cat) { return cat.items.length > 0; });
   }
 
+  /* ── Конвертує будь-яке посилання Google Drive у пряме посилання на фото ── */
+  function fixPhotoUrl(url) {
+    if (!url) return '';
+    // https://drive.google.com/file/d/ID/view...
+    var m = url.match(/drive\.google\.com\/file\/d\/([^/?]+)/);
+    if (m) return 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w600';
+    // https://drive.google.com/open?id=ID
+    var m2 = url.match(/drive\.google\.com\/open\?id=([^&]+)/);
+    if (m2) return 'https://drive.google.com/thumbnail?id=' + m2[1] + '&sz=w600';
+    return url;
+  }
+
   /* ── Лікарі: Імʼя | Спеціалізація | Фото URL ── */
   function toDoctors(rows) {
     if (rows.length < 2) return null;
@@ -96,7 +113,7 @@
       out.push({
         name:    name,
         role:    role,
-        photo:   col(r, 2),
+        photo:   fixPhotoUrl(col(r, 2)),
         isNurse: /медсестра|медична сестра|сестра/i.test(role)
       });
     }
