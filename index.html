@@ -496,86 +496,7 @@
   <div class="container">
     <span class="section-label">НАШІ ЛІКАРІ</span>
     <h2 class="section-heading">Команда професіоналів</h2>
-    <div class="doctors-grid">
-
-      <!-- Олійник Ігор Євгенійович — хірург-стоматолог, імплантолог, ортопед -->
-      <div class="doctor-card">
-        <div class="doctor-photo">
-          <img src="doctors/oliynyk1.png" alt="Олійник Ігор Євгенійович">
-        </div>
-        <div class="doctor-info">
-          <div class="doctor-info-header">
-            <div>
-              <div class="doctor-name">Олійник Ігор Євгенійович</div>
-              <div class="doctor-role">хірург-стоматолог, імплантолог, ортопед</div>
-            </div>
-            <div class="doctor-plus"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Рибін Олександр Володимирович — терапевт-ортопед -->
-      <div class="doctor-card">
-        <div class="doctor-photo" style="background:linear-gradient(165deg,#e8ddd0 0%,#d8ccbe 100%)">
-          <img src="doctors/rybin1.png" alt="Рибін Олександр Володимирович">
-        </div>
-        <div class="doctor-info">
-          <div class="doctor-info-header">
-            <div>
-              <div class="doctor-name">Рибін Олександр Володимирович</div>
-              <div class="doctor-role">терапевт-ортопед</div>
-            </div>
-            <div class="doctor-plus"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Соколова Анастасія Сергіївна — медична сестра -->
-      <div class="doctor-card doctor-card--nurse">
-        <div class="doctor-photo" style="background:linear-gradient(165deg,#f0e8dc 0%,#e2d6c6 100%)">
-          <img src="doctors/sokolova.png" alt="Соколова Анастасія Сергіївна">
-        </div>
-        <div class="doctor-info">
-          <div class="doctor-info-header">
-            <div>
-              <div class="doctor-name">Соколова Анастасія Сергіївна</div>
-              <div class="doctor-role">медична сестра</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Сідих Катерина Іванівна — медична сестра -->
-      <div class="doctor-card doctor-card--nurse">
-        <div class="doctor-photo" style="background:linear-gradient(165deg,#ede4d6 0%,#dfd2c2 100%)">
-          <img src="doctors/sidykh.png" alt="Сідих Катерина Іванівна">
-        </div>
-        <div class="doctor-info">
-          <div class="doctor-info-header">
-            <div>
-              <div class="doctor-name">Сідих Катерина Іванівна</div>
-              <div class="doctor-role">медична сестра</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Левченко Ірина Михайлівна — медична сестра -->
-      <div class="doctor-card doctor-card--nurse">
-        <div class="doctor-photo" style="background:linear-gradient(165deg,#eae0d2 0%,#dcd0be 100%)">
-          <img src="doctors/levchenko.png" alt="Левченко Ірина Михайлівна">
-        </div>
-        <div class="doctor-info">
-          <div class="doctor-info-header">
-            <div>
-              <div class="doctor-name">Левченко Ірина Михайлівна</div>
-              <div class="doctor-role">медична сестра</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
+    <div class="doctors-grid" id="doctors-grid"></div>
   </div>
 </section>
 
@@ -1263,6 +1184,7 @@ document.querySelectorAll('button').forEach(b => {
 })();
 </script>
 
+<script src="sheets-loader.js"></script>
 <script src="prices.js"></script>
 <script>
 (function() {
@@ -1327,6 +1249,80 @@ document.querySelectorAll('button').forEach(b => {
   panel.querySelectorAll('a').forEach(function(a) {
     a.addEventListener('click', function() { closeMenu(); });
   });
+})();
+</script>
+
+<script>
+/* ── Секція «Наші лікарі» — завантаження з Google Sheets або статичні дані ── */
+(function () {
+  var STATIC_DOCTORS = [
+    { name: 'Олійник Ігор Євгенійович',      role: 'хірург-стоматолог, імплантолог, ортопед', photo: 'doctors/oliynyk1.png',  isNurse: false },
+    { name: 'Рибін Олександр Володимирович',  role: 'терапевт-ортопед',                        photo: 'doctors/rybin1.png',    isNurse: false },
+    { name: 'Соколова Анастасія Сергіївна',   role: 'медична сестра',                          photo: 'doctors/sokolova.png',  isNurse: true  },
+    { name: 'Сідих Катерина Іванівна',         role: 'медична сестра',                          photo: 'doctors/sidykh.png',    isNurse: true  },
+    { name: 'Левченко Ірина Михайлівна',       role: 'медична сестра',                          photo: 'doctors/levchenko.png', isNurse: true  }
+  ];
+
+  var BG_GRADIENTS = [
+    'linear-gradient(165deg,#efe4d6 0%,#e0d0bb 100%)',
+    'linear-gradient(165deg,#e8ddd0 0%,#d8ccbe 100%)',
+    'linear-gradient(165deg,#f0e8dc 0%,#e2d6c6 100%)',
+    'linear-gradient(165deg,#ede4d6 0%,#dfd2c2 100%)',
+    'linear-gradient(165deg,#eae0d2 0%,#dcd0be 100%)'
+  ];
+
+  var PLACEHOLDER_SVG =
+    '<svg viewBox="0 0 80 96" width="56" height="56" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+    '<circle cx="40" cy="30" r="20" stroke="#C49A55" stroke-width="1.5"/>' +
+    '<path d="M8 90 C8 64 72 64 72 90" stroke="#C49A55" stroke-width="1.5" stroke-linecap="round"/>' +
+    '</svg>';
+
+  function renderDoctors(doctors) {
+    var grid = document.getElementById('doctors-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    doctors.forEach(function (d, idx) {
+      var card = document.createElement('div');
+      card.className = 'doctor-card' + (d.isNurse ? ' doctor-card--nurse' : '');
+
+      var photoDiv = document.createElement('div');
+      photoDiv.className = 'doctor-photo';
+      photoDiv.style.background = BG_GRADIENTS[idx % BG_GRADIENTS.length];
+      if (d.photo) {
+        var img = document.createElement('img');
+        img.src = d.photo;
+        img.alt = d.name;
+        photoDiv.appendChild(img);
+      } else {
+        photoDiv.innerHTML = PLACEHOLDER_SVG;
+      }
+
+      var infoDiv = document.createElement('div');
+      infoDiv.className = 'doctor-info';
+      infoDiv.innerHTML =
+        '<div class="doctor-info-header">' +
+          '<div>' +
+            '<div class="doctor-name">' + d.name + '</div>' +
+            '<div class="doctor-role">' + d.role + '</div>' +
+          '</div>' +
+          (!d.isNurse
+            ? '<div class="doctor-plus"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></div>'
+            : '') +
+        '</div>';
+
+      card.appendChild(photoDiv);
+      card.appendChild(infoDiv);
+      grid.appendChild(card);
+    });
+  }
+
+  if (typeof SheetsLoader !== 'undefined' && SheetsLoader.ready) {
+    SheetsLoader.loadDoctorsData()
+      .then(function (data) { renderDoctors(data && data.length ? data : STATIC_DOCTORS); })
+      .catch(function ()    { renderDoctors(STATIC_DOCTORS); });
+  } else {
+    renderDoctors(STATIC_DOCTORS);
+  }
 })();
 </script>
 </body>
