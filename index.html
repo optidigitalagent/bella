@@ -1257,11 +1257,11 @@ document.querySelectorAll('button').forEach(b => {
 /* ── Секція «Наші лікарі» — завантаження з Google Sheets або статичні дані ── */
 (function () {
   var STATIC_DOCTORS = [
-    { name: 'Олійник Ігор Євгенійович',      role: 'хірург-стоматолог, імплантолог, ортопед', photo: 'doctors/oliynyk1.png',  isNurse: false },
-    { name: 'Рибін Олександр Володимирович',  role: 'терапевт-ортопед',                        photo: 'doctors/rybin1.png',    isNurse: false },
-    { name: 'Соколова Анастасія Сергіївна',   role: 'медична сестра',                          photo: 'doctors/sokolova.png',  isNurse: true  },
-    { name: 'Сідих Катерина Іванівна',         role: 'медична сестра',                          photo: 'doctors/sidykh.png',    isNurse: true  },
-    { name: 'Левченко Ірина Михайлівна',       role: 'медична сестра',                          photo: 'doctors/levchenko.png', isNurse: true  }
+    { name: 'Олійник Ігор Євгенійович',      role: 'Головний лікар клініки, хірург-стоматолог, імплантолог, ортопед', photo: 'doctors/oliynyk1.png',  isNurse: false },
+    { name: 'Рибін Олександр Володимирович',  role: 'терапевт-ортопед',                                                   photo: 'doctors/rybin2.png',    isNurse: false },
+    { name: 'Соколова Анастасія Сергіївна',   role: 'Асистент лікаря - медсестра зі стоматології',                        photo: 'doctors/sokolova.png',  isNurse: true  },
+    { name: 'Сідих Катерина Іванівна',         role: 'Асистент лікаря - медсестра зі стоматології',                        photo: 'doctors/sidykh.png',    isNurse: true  },
+    { name: 'Левченко Ірина Михайлівна',       role: 'Асистент лікаря - медсестра зі стоматології',                        photo: 'doctors/levchenko.png', isNurse: true  }
   ];
 
   var BG_GRADIENTS = [
@@ -1293,6 +1293,7 @@ document.querySelectorAll('button').forEach(b => {
         var img = document.createElement('img');
         img.src = d.photo;
         img.alt = d.name;
+        img.onerror = function () { photoDiv.innerHTML = PLACEHOLDER_SVG; };
         photoDiv.appendChild(img);
       } else {
         photoDiv.innerHTML = PLACEHOLDER_SVG;
