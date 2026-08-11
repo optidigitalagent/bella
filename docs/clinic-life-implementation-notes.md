@@ -113,3 +113,15 @@ The frontend will retain one API configuration point in `site-config.js`. All Te
 - News publish/restore and duplicate lead processing use database transactions plus advisory locks. Rolling A-E, edit, archive, restore, duplicate IDs, delivery failure, and rollback are covered.
 - Real Railway PostgreSQL integration passed 24/24 tests in an isolated schema. The temporary public test proxy and test schema were removed afterward; production networking remains private.
 - Responsive browser QA passed at 360, 390, 430, 768, 1024, 1280, and 1440 px. Thirteen cases passed in the full run; the sole 1280px teardown timeout passed on focused rerun with the corrected 60-second QA timeout.
+
+## Final production verification (2026-08-11)
+
+- The administrator started the Telegram bot; `/start` and the CMS menu passed.
+- Railway reports one running API replica and one running PostgreSQL service. Production `/health` returns `database: ok`; `/api/news` returns 200 with the exact clinic-origin CORS header.
+- Telegram webhook URL, reachability, and a zero pending-update queue passed.
+- A real Telegram image flowed through Railway into Cloudinary and the resulting delivery URL was reachable.
+- The live rolling sequence passed exactly: A; B,A; C,B,A; D,C,B with A archived; E,D,C with B archived.
+- Telegram Active News, Archive, Restore, and Edit passed. QA records were archived after verification, leaving the public active window empty.
+- GitHub Pages built commit `0f0efa1` successfully from `main`; the custom domain and enforced HTTPS certificate are approved.
+- Live rendered QA passed at 390, 768, and 1440 px for the homepage, production API configuration, news visibility, lead form, responsive overflow, and price page.
+- A real rendered lead submission passed website -> Railway -> PostgreSQL -> Telegram. Frontend success was shown only after confirmed Telegram delivery.

@@ -109,3 +109,14 @@ node -e "console.log(require('node:crypto').randomBytes(32).toString('base64url'
 6. Submit a real lead and confirm Telegram delivery plus a `delivered` database row.
 
 Do not report Telegram live-message checks as passed until the administrator has started the bot.
+
+## Repeatable production QA
+
+Run rendered live-site checks from `server/` with `npm run test:live:browser`. Set
+`SKIP_LEAD=1` to exercise the UI without sending a real lead.
+
+The CMS production acceptance script intentionally refuses to run without an explicit
+mutation acknowledgement and an empty active-news window. Load the Railway variables,
+set `ALLOW_PRODUCTION_MUTATION=1`, then run `npm run test:live:production`. It verifies
+the webhook, Telegram image handling, Cloudinary delivery, rolling A-E behavior,
+archive/restore/edit operations, and cleans its active QA records afterward.
