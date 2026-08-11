@@ -12,6 +12,8 @@
     "test": "node --test --test-reporter=spec",
     "test:coverage": "node --test --experimental-test-coverage",
     "test:browser": "playwright test",
+    "test:live:browser": "node scripts/live-browser-qa.mjs",
+    "test:live:production": "node scripts/live-production-e2e.mjs",
     "qa:serve": "node scripts/qa-server.mjs",
     "db:migrate": "node scripts/migrate.mjs",
     "telegram:set-webhook": "node scripts/set-telegram-webhook.mjs"
