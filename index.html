@@ -326,6 +326,7 @@
   .menu-nav-links a:hover{color:var(--gold);}
 
 </style>
+<link rel="stylesheet" href="clinic-life.css">
 </head>
 <body>
 
@@ -565,6 +566,45 @@
   </div>
 </section>
 
+<!-- CLINIC LIFE -->
+<section id="clinic-life" aria-labelledby="clinic-life-title" hidden>
+  <div class="container">
+    <span class="section-label">ЖИТТЯ КЛІНІКИ</span>
+    <h2 class="section-heading clinic-life-heading" id="clinic-life-title">Новини та події Bella Dent</h2>
+    <div class="clinic-life-grid clinic-life-skeleton" id="clinic-life-grid" data-count="3" aria-live="polite" aria-busy="true">
+      <article class="clinic-life-card">
+        <div class="clinic-life-media clinic-life-skeleton-block"></div>
+        <div class="clinic-life-content">
+          <div class="clinic-life-skeleton-line clinic-life-skeleton-line--date clinic-life-skeleton-block"></div>
+          <div class="clinic-life-skeleton-line clinic-life-skeleton-line--title clinic-life-skeleton-block"></div>
+          <div class="clinic-life-skeleton-line clinic-life-skeleton-line--body clinic-life-skeleton-block"></div>
+          <div class="clinic-life-skeleton-line clinic-life-skeleton-line--body clinic-life-skeleton-block"></div>
+          <div class="clinic-life-skeleton-line clinic-life-skeleton-line--short clinic-life-skeleton-block"></div>
+        </div>
+      </article>
+      <article class="clinic-life-card">
+        <div class="clinic-life-media clinic-life-skeleton-block"></div>
+        <div class="clinic-life-content">
+          <div class="clinic-life-skeleton-line clinic-life-skeleton-line--date clinic-life-skeleton-block"></div>
+          <div class="clinic-life-skeleton-line clinic-life-skeleton-line--title clinic-life-skeleton-block"></div>
+          <div class="clinic-life-skeleton-line clinic-life-skeleton-line--body clinic-life-skeleton-block"></div>
+          <div class="clinic-life-skeleton-line clinic-life-skeleton-line--short clinic-life-skeleton-block"></div>
+        </div>
+      </article>
+      <article class="clinic-life-card">
+        <div class="clinic-life-media clinic-life-skeleton-block"></div>
+        <div class="clinic-life-content">
+          <div class="clinic-life-skeleton-line clinic-life-skeleton-line--date clinic-life-skeleton-block"></div>
+          <div class="clinic-life-skeleton-line clinic-life-skeleton-line--title clinic-life-skeleton-block"></div>
+          <div class="clinic-life-skeleton-line clinic-life-skeleton-line--body clinic-life-skeleton-block"></div>
+          <div class="clinic-life-skeleton-line clinic-life-skeleton-line--short clinic-life-skeleton-block"></div>
+        </div>
+      </article>
+    </div>
+    <div class="clinic-life-dots" id="clinic-life-dots" aria-label="Навігація новинами"></div>
+  </div>
+</section>
+
 <!-- REVIEWS -->
 <section id="reviews">
   <div class="container">
@@ -739,6 +779,32 @@
             </div>
           </div>
         </div>
+      </div>
+      <div class="lead-form-wrap">
+        <h3 class="lead-form-heading">Записатися на консультацію</h3>
+        <p class="lead-form-intro">Залиште контакти — адміністратор Bella Dent звʼяжеться з вами.</p>
+        <form class="lead-form" id="lead-form" novalidate>
+          <div class="lead-field">
+            <label for="lead-name">Імʼя</label>
+            <input id="lead-name" name="name" type="text" autocomplete="name" minlength="2" maxlength="100" required>
+          </div>
+          <div class="lead-field">
+            <label for="lead-phone">Телефон</label>
+            <input id="lead-phone" name="phone" type="tel" autocomplete="tel" minlength="6" maxlength="30" inputmode="tel" required>
+          </div>
+          <div class="lead-field lead-field--wide">
+            <label for="lead-comment">Коментар</label>
+            <textarea id="lead-comment" name="comment" maxlength="1000" placeholder="Наприклад: хочу записатися на консультацію"></textarea>
+          </div>
+          <div class="lead-honeypot" aria-hidden="true">
+            <label for="lead-website">Website</label>
+            <input id="lead-website" name="website" type="text" tabindex="-1" autocomplete="off">
+          </div>
+          <div class="lead-form-actions">
+            <button class="lead-submit" type="submit">НАДІСЛАТИ</button>
+            <p class="lead-form-status" id="lead-form-status" role="status" aria-live="polite"></p>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -1327,5 +1393,7 @@ document.querySelectorAll('button').forEach(b => {
   }
 })();
 </script>
+<script src="site-config.js"></script>
+<script src="clinic-life.js"></script>
 </body>
 </html>
