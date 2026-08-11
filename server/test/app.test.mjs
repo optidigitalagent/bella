@@ -14,10 +14,11 @@ function fixture(overrides = {}) {
   };
   const leadsService = overrides.leadsService || { submit: async () => { leadCalls++; return { id: 'l1' }; } };
   const app = createApp({
-    config: makeConfig(),
+    config: overrides.config || makeConfig(),
     newsService,
     leadsService,
     telegramCms: overrides.telegramCms || { handleUpdate: async () => {} },
+    healthCheck: overrides.healthCheck,
     logger: { error() {} }
   });
   return { app, getLeadCalls: () => leadCalls };
@@ -33,6 +34,28 @@ test('GET /api/news returns safe public fields and no-store', async () => {
     const body = await response.json();
     assert.deepEqual(Object.keys(body[0]).sort(), ['description', 'id', 'instagramUrl', 'mediaType', 'mediaUrl', 'publishedAt', 'title'].sort());
     assert.equal('cloudinary_public_id' in body[0], false);
+  });
+});
+
+test('GET /health verifies database connectivity', async () => {
+  const healthy = fixture({ healthCheck: async () => true });
+  await withServer(healthy.app, async (base) => {
+    const response = await fetch(`${base}/health`);
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { status: 'ok', database: 'ok' });
+  });
+
+  const app = createApp({
+    config: makeConfig(),
+    newsService: {},
+    leadsService: {},
+    telegramCms: {},
+    healthCheck: async () => { throw new Error('database unavailable'); },
+    logger: { error() {} }
+  });
+  await withServer(app, async (base) => {
+    const response = await fetch(`${base}/health`);
+    assert.equal(response.status, 500);
   });
 });
 
@@ -66,6 +89,30 @@ test('webhook requires exact Telegram secret token', async () => {
     const unauthorized = await fetch(`${base}/api/telegram/webhook`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
     assert.equal(unauthorized.status, 401);
     const authorized = await fetch(`${base}/api/telegram/webhook`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-telegram-bot-api-secret-token': 'test-secret' }, body: '{}' });
+    assert.equal(authorized.status, 200);
+    assert.equal(handled, 1);
+  });
+});
+
+test('unauthorized webhook traffic does not consume the authenticated rate limit', async () => {
+  let handled = 0;
+  const config = makeConfig();
+  config.rateLimits.webhookMax = 1;
+  const { app } = fixture({
+    config,
+    telegramCms: { handleUpdate: async () => { handled++; } }
+  });
+  await withServer(app, async (base) => {
+    const unauthorized = await fetch(`${base}/api/telegram/webhook`, {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}'
+    });
+    assert.equal(unauthorized.status, 401);
+
+    const authorized = await fetch(`${base}/api/telegram/webhook`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-telegram-bot-api-secret-token': 'test-secret' },
+      body: '{}'
+    });
     assert.equal(authorized.status, 200);
     assert.equal(handled, 1);
   });

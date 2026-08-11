@@ -13,7 +13,7 @@
     "test:coverage": "node --test --experimental-test-coverage",
     "test:browser": "playwright test",
     "qa:serve": "node scripts/qa-server.mjs",
-    "sheets:init": "node scripts/init-sheets.mjs",
+    "db:migrate": "node scripts/migrate.mjs",
     "telegram:set-webhook": "node scripts/set-telegram-webhook.mjs"
   },
   "dependencies": {
@@ -21,8 +21,8 @@
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "express-rate-limit": "^8.6.2",
-    "googleapis": "^174.0.1",
     "helmet": "^8.3.0",
+    "pg": "^8.23.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {

@@ -1,13 +1,32 @@
-export class FakeRepository {
+export class MemoryRepository {
   constructor({ news = [], leads = [] } = {}) {
     this.news = news.map((item, index) => ({ ...item, _rowNumber: index + 2 }));
     this.leads = leads.map((item, index) => ({ ...item, _rowNumber: index + 2 }));
     this.failAppendNews = false;
+    this.transactionQueue = Promise.resolve();
+  }
+
+  async transaction(_lockKey, callback) {
+    const previous = this.transactionQueue;
+    let release;
+    this.transactionQueue = new Promise((resolve) => { release = resolve; });
+    await previous;
+    const newsSnapshot = structuredClone(this.news);
+    const leadsSnapshot = structuredClone(this.leads);
+    try {
+      return await callback(this);
+    } catch (error) {
+      this.news = newsSnapshot;
+      this.leads = leadsSnapshot;
+      throw error;
+    } finally {
+      release();
+    }
   }
 
   async listNews() { return this.news.map((item) => ({ ...item })); }
   async appendNews(record) {
-    if (this.failAppendNews) throw new Error('Sheets append failed');
+    if (this.failAppendNews) throw new Error('Database insert failed');
     this.news.push({ ...record, _rowNumber: this.news.length + 2 });
     return record;
   }

@@ -14,11 +14,10 @@ const envSchema = z.object({
   CLOUDINARY_API_SECRET: z.string().trim().default(''),
   CLOUDINARY_FOLDER: z.string().trim().default('bella-dent/news'),
   MAX_MEDIA_BYTES: z.coerce.number().int().positive().default(20_000_000),
-  GOOGLE_SHEET_ID: z.string().trim().default(''),
-  GOOGLE_SERVICE_ACCOUNT_JSON: z.string().default(''),
-  GOOGLE_SERVICE_ACCOUNT_JSON_BASE64: z.string().default(''),
-  NEWS_SHEET_NAME: z.string().trim().default('News'),
-  LEADS_SHEET_NAME: z.string().trim().default('Leads'),
+  DATABASE_URL: z.string().trim().default(''),
+  DATABASE_POOL_MAX: z.coerce.number().int().positive().max(50).default(10),
+  DATABASE_CONNECTION_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
+  DATABASE_IDLE_TIMEOUT_MS: z.coerce.number().int().positive().default(30_000),
   LEAD_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(900_000),
   LEAD_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(5),
   WEBHOOK_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60_000),
@@ -40,12 +39,9 @@ export function loadConfig(source = process.env) {
   if (env.NODE_ENV === 'production') {
     const required = [
       'PUBLIC_BASE_URL', 'TELEGRAM_BOT_TOKEN', 'TELEGRAM_ADMIN_IDS', 'TELEGRAM_WEBHOOK_SECRET',
-      'CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET', 'GOOGLE_SHEET_ID'
+      'CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET', 'DATABASE_URL'
     ];
     const missing = required.filter((name) => !env[name]);
-    if (!env.GOOGLE_SERVICE_ACCOUNT_JSON && !env.GOOGLE_SERVICE_ACCOUNT_JSON_BASE64) {
-      missing.push('GOOGLE_SERVICE_ACCOUNT_JSON or GOOGLE_SERVICE_ACCOUNT_JSON_BASE64');
-    }
     if (missing.length) throw new Error(`Missing required production variables: ${missing.join(', ')}`);
     const publicUrl = new URL(env.PUBLIC_BASE_URL);
     if (publicUrl.protocol !== 'https:') throw new Error('PUBLIC_BASE_URL must use HTTPS in production');
@@ -68,12 +64,11 @@ export function loadConfig(source = process.env) {
       folder: env.CLOUDINARY_FOLDER,
       maxMediaBytes: env.MAX_MEDIA_BYTES
     },
-    google: {
-      sheetId: env.GOOGLE_SHEET_ID,
-      serviceAccountJson: env.GOOGLE_SERVICE_ACCOUNT_JSON,
-      serviceAccountJsonBase64: env.GOOGLE_SERVICE_ACCOUNT_JSON_BASE64,
-      newsSheetName: env.NEWS_SHEET_NAME,
-      leadsSheetName: env.LEADS_SHEET_NAME
+    database: {
+      databaseUrl: env.DATABASE_URL,
+      poolMax: env.DATABASE_POOL_MAX,
+      connectionTimeoutMs: env.DATABASE_CONNECTION_TIMEOUT_MS,
+      idleTimeoutMs: env.DATABASE_IDLE_TIMEOUT_MS
     },
     rateLimits: {
       leadWindowMs: env.LEAD_RATE_LIMIT_WINDOW_MS,

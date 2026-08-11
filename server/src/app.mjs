@@ -14,7 +14,7 @@ function secureEqual(actual, expected) {
   return actualBuffer.length === expectedBuffer.length && timingSafeEqual(actualBuffer, expectedBuffer);
 }
 
-export function createApp({ config, newsService, leadsService, telegramCms, logger = defaultLogger }) {
+export function createApp({ config, newsService, leadsService, telegramCms, healthCheck = async () => true, logger = defaultLogger }) {
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', 1);
@@ -30,8 +30,14 @@ export function createApp({ config, newsService, leadsService, telegramCms, logg
     maxAge: 600
   }));
 
-  app.get('/health', (_request, response) => {
-    response.set('Cache-Control', 'no-store').json({ status: 'ok' });
+  app.get('/health', async (_request, response, next) => {
+    try {
+      const databaseHealthy = await healthCheck();
+      if (!databaseHealthy) throw new Error('Database health check failed');
+      response.set('Cache-Control', 'no-store').json({ status: 'ok', database: 'ok' });
+    } catch (error) {
+      next(error);
+    }
   });
 
   app.get('/api/news', async (_request, response, next) => {
@@ -73,14 +79,14 @@ export function createApp({ config, newsService, leadsService, telegramCms, logg
     message: { error: 'RATE_LIMITED' }
   });
 
-  app.post('/api/telegram/webhook', webhookLimiter, (request, response, next) => {
+  app.post('/api/telegram/webhook', (request, response, next) => {
     const supplied = request.get('X-Telegram-Bot-Api-Secret-Token');
     if (!secureEqual(supplied, config.telegram.webhookSecret)) {
       next(new HttpError(401, 'UNAUTHORIZED', 'Unauthorized'));
       return;
     }
     next();
-  }, async (request, response, next) => {
+  }, webhookLimiter, async (request, response, next) => {
     try {
       await telegramCms.handleUpdate(request.body);
       response.status(200).json({ ok: true });

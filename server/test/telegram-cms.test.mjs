@@ -53,12 +53,12 @@ test('Cloudinary upload error does not create published news', async () => {
   store.close();
 });
 
-test('Sheets publish error never sends Telegram success', async () => {
+test('database publish error never sends Telegram success', async () => {
   const telegram = makeTelegram();
   const store = new DraftStore({ ttlMs: 10_000 });
   const cms = new TelegramCms({
     telegram,
-    newsService: { publish: async () => { throw new Error('Sheets failed'); } },
+    newsService: { publish: async () => { throw new Error('Database failed'); } },
     mediaService: { upload: async () => ({ mediaType: 'image', mediaUrl: 'https://res.cloudinary.com/demo/image/upload/a.jpg', cloudinaryPublicId: 'a' }) },
     draftStore: store, adminIds: ['1'], maxMediaBytes: 1000,
     logger: { error() {}, warn() {} }

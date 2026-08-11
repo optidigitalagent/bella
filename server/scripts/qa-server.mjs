@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 
 const app = express();
 const root = resolve(import.meta.dirname, '..', '..');
-const port = Number(process.env.QA_PORT || 4173);
+const port = Number(process.env.QA_PORT || 43917);
 
 app.use(express.json());
 app.get('/health-for-qa', (_request, response) => response.status(204).end());

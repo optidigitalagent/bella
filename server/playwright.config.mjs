@@ -1,21 +1,25 @@
 import { defineConfig } from '@playwright/test';
 
 const widths = [360, 390, 430, 768, 1024, 1280, 1440];
+const qaPort = Number(process.env.QA_PORT || 43917);
+const qaBaseUrl = `http://127.0.0.1:${qaPort}`;
 
 export default defineConfig({
   testDir: './qa',
   outputDir: './test-results/browser-qa',
+  timeout: 60_000,
   fullyParallel: false,
   workers: 1,
   reporter: [['list'], ['html', { outputFolder: 'playwright-report', open: 'never' }]],
   use: {
-    baseURL: 'http://127.0.0.1:4173',
+    baseURL: qaBaseUrl,
     screenshot: 'only-on-failure',
     trace: 'retain-on-failure'
   },
   webServer: {
     command: 'npm run qa:serve',
-    url: 'http://127.0.0.1:4173/health-for-qa',
+    url: `${qaBaseUrl}/health-for-qa`,
+    env: { QA_PORT: String(qaPort) },
     reuseExistingServer: true,
     timeout: 30_000
   },

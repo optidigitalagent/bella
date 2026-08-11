@@ -1,7 +1,7 @@
 import { createServer } from 'node:http';
 import { loadConfig } from './config.mjs';
 import { logger } from './lib/logger.mjs';
-import { GoogleSheetsRepository } from './services/google-sheets.mjs';
+import { PostgresRepository } from './services/postgres.mjs';
 import { CloudinaryMediaService } from './services/cloudinary.mjs';
 import { TelegramClient } from './services/telegram.mjs';
 import { NewsService } from './services/news-service.mjs';
@@ -11,8 +11,8 @@ import { TelegramCms } from './bot/handlers.mjs';
 import { createApp } from './app.mjs';
 
 const config = loadConfig();
-const repository = await GoogleSheetsRepository.fromConfig(config.google);
-await repository.ensureSchema();
+const repository = PostgresRepository.fromConfig(config.database);
+await repository.migrate();
 
 const telegram = new TelegramClient(config.telegram.botToken);
 const mediaService = new CloudinaryMediaService(config.cloudinary);
@@ -40,7 +40,14 @@ const telegramCms = new TelegramCms({
   logger
 });
 
-const app = createApp({ config, newsService, leadsService, telegramCms, logger });
+const app = createApp({
+  config,
+  newsService,
+  leadsService,
+  telegramCms,
+  healthCheck: () => repository.ping(),
+  logger
+});
 const server = createServer(app);
 
 server.listen(config.port, '0.0.0.0', () => {
@@ -50,11 +57,12 @@ server.listen(config.port, '0.0.0.0', () => {
 function shutdown(signal) {
   logger.info('Graceful shutdown requested', { signal });
   draftStore.close();
-  server.close((error) => {
+  server.close(async (error) => {
     if (error) {
       logger.error('Server shutdown failed', error);
       process.exitCode = 1;
     }
+    await repository.close();
     process.exit();
   });
   setTimeout(() => process.exit(1), 10_000).unref();

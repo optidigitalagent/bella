@@ -65,11 +65,11 @@ export class NewsService {
 
   async publish(input) {
     const draft = newsDraftSchema.parse(input);
-    return this.mutex.runExclusive(async () => {
-      let records = await this.repository.listNews();
+    return this.#transaction('news:rolling-window', async (repository) => {
+      const records = await repository.listNews();
       const existing = records.find((record) => record.publish_request_id === draft.publishRequestId);
       if (existing) {
-        const verification = await this.#enforceAndVerify();
+        const verification = await this.#enforceAndVerify(repository);
         return { news: toPublicNews(existing), archived: verification.archived, idempotent: true };
       }
 
@@ -90,8 +90,8 @@ export class NewsService {
         publish_request_id: draft.publishRequestId
       };
 
-      await this.repository.appendNews(record);
-      const verification = await this.#enforceAndVerify(record.id);
+      await repository.appendNews(record);
+      const verification = await this.#enforceAndVerify(repository, record.id);
       const publishedRecord = verification.published.find((item) => item.id === record.id);
       if (!publishedRecord) throw new Error('Newly published news did not remain in the active window');
       return { news: toPublicNews(publishedRecord), archived: verification.archived, idempotent: false };
@@ -99,35 +99,35 @@ export class NewsService {
   }
 
   async archive(id) {
-    return this.mutex.runExclusive(async () => {
-      const current = await this.findById(id);
+    return this.#transaction('news:rolling-window', async (repository) => {
+      const current = (await repository.listNews()).find((record) => record.id === id);
       if (!current) return null;
       if (current.status === 'archived') return current;
       const now = this.clock().toISOString();
-      return this.repository.updateNews(id, { status: 'archived', archived_at: now, updated_at: now });
+      return repository.updateNews(id, { status: 'archived', archived_at: now, updated_at: now });
     });
   }
 
   async restore(id) {
-    return this.mutex.runExclusive(async () => {
-      const records = await this.repository.listNews();
+    return this.#transaction('news:rolling-window', async (repository) => {
+      const records = await repository.listNews();
       const current = records.find((record) => record.id === id);
       if (!current) return null;
       const timestamp = this.#nextPublishedAt(records);
-      await this.repository.updateNews(id, {
+      await repository.updateNews(id, {
         status: 'published',
         published_at: timestamp,
         updated_at: timestamp,
         archived_at: ''
       });
-      return this.#enforceAndVerify(id);
+      return this.#enforceAndVerify(repository, id);
     });
   }
 
   async update(id, input) {
     const patch = newsPatchSchema.parse(input);
-    return this.mutex.runExclusive(async () => {
-      const current = await this.findById(id);
+    return this.#transaction(`news:edit:${id}`, async (repository) => {
+      const current = (await repository.listNews()).find((record) => record.id === id);
       if (!current) return null;
       const mapped = { updated_at: this.clock().toISOString() };
       if (patch.title !== undefined) mapped.title = patch.title;
@@ -136,7 +136,7 @@ export class NewsService {
       if (patch.mediaType !== undefined) mapped.media_type = patch.mediaType;
       if (patch.mediaUrl !== undefined) mapped.media_url = patch.mediaUrl;
       if (patch.cloudinaryPublicId !== undefined) mapped.cloudinary_public_id = patch.cloudinaryPublicId;
-      return this.repository.updateNews(id, mapped);
+      return repository.updateNews(id, mapped);
     });
   }
 
@@ -146,19 +146,19 @@ export class NewsService {
     return new Date(Math.max(clockMs, latestMs + 1)).toISOString();
   }
 
-  async #enforceAndVerify(expectedActiveId) {
-    const before = (await this.repository.listNews()).filter((record) => record.status === 'published').sort(newestFirst);
+  async #enforceAndVerify(repository, expectedActiveId) {
+    const before = (await repository.listNews()).filter((record) => record.status === 'published').sort(newestFirst);
     const overflow = before.slice(3);
     const archivedAt = this.clock().toISOString();
     for (const record of overflow) {
-      await this.repository.updateNews(record.id, {
+      await repository.updateNews(record.id, {
         status: 'archived',
         archived_at: archivedAt,
         updated_at: archivedAt
       });
     }
 
-    const afterAll = await this.repository.listNews();
+    const afterAll = await repository.listNews();
     const published = afterAll.filter((record) => record.status === 'published').sort(newestFirst);
     if (published.length > 3) throw new Error('Rolling window invariant failed: more than three published news');
     const expectedIds = before.slice(0, 3).map((record) => record.id);
@@ -168,5 +168,12 @@ export class NewsService {
       throw new Error('Rolling window invariant failed: expected news is not active');
     }
     return { published, archived: overflow };
+  }
+
+  async #transaction(lockKey, callback) {
+    if (typeof this.repository.transaction === 'function') {
+      return this.repository.transaction(lockKey, callback);
+    }
+    return this.mutex.runExclusive(() => callback(this.repository));
   }
 }
