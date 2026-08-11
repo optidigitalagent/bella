@@ -1,0 +1,98 @@
+#clinic-life{background:var(--ivory);}
+#clinic-life[hidden]{display:none;}
+.clinic-life-heading{margin-bottom:60px;}
+.clinic-life-grid{display:grid;grid-template-columns:minmax(0,1.38fr) minmax(320px,1fr);grid-template-rows:repeat(2,minmax(250px,auto));gap:24px;align-items:stretch;}
+.clinic-life-card{min-width:0;background:#fff;border:1px solid rgba(196,154,85,.18);border-radius:var(--radius);overflow:hidden;box-shadow:0 2px 20px rgba(31,26,22,.07);display:flex;transition:transform .3s,box-shadow .3s;}
+.clinic-life-card:hover{transform:translateY(-3px);box-shadow:0 10px 40px rgba(31,26,22,.12);}
+.clinic-life-card:first-child{grid-row:1 / span 2;display:flex;flex-direction:column;}
+.clinic-life-grid[data-count="1"]{display:block;max-width:920px;margin:0 auto;}
+.clinic-life-grid[data-count="1"] .clinic-life-card:first-child{min-height:0;}
+.clinic-life-grid[data-count="2"] .clinic-life-card:nth-child(2){grid-row:1 / span 2;}
+.clinic-life-media{position:relative;overflow:hidden;background:var(--beige);flex:0 0 44%;min-width:0;}
+.clinic-life-card:first-child .clinic-life-media{flex:0 0 auto;width:100%;aspect-ratio:16/10;}
+.clinic-life-media img,.clinic-life-media video{width:100%;height:100%;display:block;object-fit:cover;}
+.clinic-life-card:first-child .clinic-life-media img,.clinic-life-card:first-child .clinic-life-media video{position:absolute;inset:0;}
+.clinic-life-content{padding:25px 26px 27px;display:flex;flex-direction:column;align-items:flex-start;min-width:0;flex:1;}
+.clinic-life-card:first-child .clinic-life-content{padding:30px 34px 34px;}
+.clinic-life-date{font-size:10px;line-height:1.4;letter-spacing:2px;text-transform:uppercase;color:var(--gold);font-weight:500;margin-bottom:10px;}
+.clinic-life-title{font-family:var(--serif);font-size:clamp(23px,2.2vw,36px);font-weight:500;line-height:1.12;color:var(--brown);margin:0 0 12px;overflow-wrap:anywhere;}
+.clinic-life-card:not(:first-child) .clinic-life-title{font-size:clamp(20px,1.7vw,27px);}
+.clinic-life-description{font-size:13px;line-height:1.72;color:var(--gray-brown);font-weight:300;margin:0 0 20px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden;overflow-wrap:anywhere;}
+.clinic-life-card:not(:first-child) .clinic-life-description{-webkit-line-clamp:3;}
+.clinic-life-description.is-expanded{display:block;overflow:visible;}
+.clinic-life-cta{margin-top:auto;display:inline-flex;align-items:center;justify-content:center;min-height:42px;border:1px solid rgba(196,154,85,.72);background:transparent;color:var(--gold-dark);font-family:var(--sans);font-size:10px;font-weight:500;letter-spacing:2.3px;text-transform:uppercase;padding:12px 24px;text-decoration:none;cursor:pointer;transition:background .3s,color .3s,border-color .3s;}
+.clinic-life-cta:hover{background:var(--gold);border-color:var(--gold);color:#fff;}
+.clinic-life-cta:focus-visible,.clinic-life-dot:focus-visible{outline:2px solid var(--gold);outline-offset:3px;}
+.clinic-life-dots{display:none;align-items:center;justify-content:center;gap:9px;margin-top:26px;}
+.clinic-life-dot{width:8px;height:8px;border:0;border-radius:50%;padding:0;background:rgba(196,154,85,.28);cursor:pointer;transition:background .25s,transform .25s;}
+.clinic-life-dot.is-active{background:var(--gold);transform:scale(1.15);}
+.clinic-life-skeleton{pointer-events:none;}
+.clinic-life-skeleton-block{background:linear-gradient(90deg,var(--cream) 20%,#fffaf3 45%,var(--cream) 70%);background-size:220% 100%;animation:clinic-life-shimmer 1.35s linear infinite;}
+.clinic-life-skeleton .clinic-life-media{min-height:250px;}
+.clinic-life-skeleton .clinic-life-card:first-child .clinic-life-media{min-height:0;}
+.clinic-life-skeleton-line{height:12px;border-radius:2px;margin-bottom:12px;}
+.clinic-life-skeleton-line--date{width:30%;height:9px;}
+.clinic-life-skeleton-line--title{width:82%;height:28px;margin-bottom:16px;}
+.clinic-life-skeleton-line--body{width:100%;}
+.clinic-life-skeleton-line--short{width:67%;}
+@keyframes clinic-life-shimmer{to{background-position:-220% 0;}}
+
+.lead-form-wrap{margin-top:48px;padding-top:42px;border-top:1px solid rgba(196,154,85,.18);}
+.lead-form-heading{font-family:var(--serif);font-size:30px;font-weight:500;color:var(--brown);text-align:center;margin:0 0 8px;}
+.lead-form-intro{font-size:13px;line-height:1.6;color:var(--gray-brown);font-weight:300;text-align:center;margin:0 auto 28px;max-width:520px;}
+.lead-form{display:grid;grid-template-columns:1fr 1fr;gap:18px 20px;}
+.lead-field{display:flex;flex-direction:column;gap:8px;}
+.lead-field--wide,.lead-form-actions{grid-column:1 / -1;}
+.lead-field label{font-size:10px;letter-spacing:1.7px;text-transform:uppercase;color:var(--gray-brown);font-weight:500;}
+.lead-field input,.lead-field textarea{width:100%;border:1px solid rgba(196,154,85,.3);border-radius:2px;background:#fff;color:var(--brown);font:300 14px/1.5 var(--sans);padding:13px 15px;outline:none;transition:border-color .25s,box-shadow .25s;}
+.lead-field textarea{min-height:108px;resize:vertical;}
+.lead-field input:focus,.lead-field textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(196,154,85,.1);}
+.lead-form-actions{display:flex;flex-direction:column;align-items:center;gap:13px;margin-top:3px;}
+.lead-submit{min-width:220px;border:1px solid var(--gold);background:var(--gold);color:#fff;font-family:var(--sans);font-size:10px;font-weight:500;letter-spacing:2.5px;text-transform:uppercase;padding:15px 30px;cursor:pointer;transition:background .3s,border-color .3s;}
+.lead-submit:hover{background:var(--gold-dark);border-color:var(--gold-dark);}
+.lead-submit:disabled{opacity:.58;cursor:wait;}
+.lead-form-status{min-height:22px;font-size:13px;line-height:1.55;text-align:center;color:var(--gray-brown);}
+.lead-form-status.is-success{color:#426a45;}
+.lead-form-status.is-error{color:#9b3d35;}
+.lead-honeypot{position:absolute!important;left:-10000px!important;width:1px!important;height:1px!important;overflow:hidden!important;opacity:0!important;pointer-events:none!important;}
+
+@media(max-width:1100px){
+  .clinic-life-grid{grid-template-columns:minmax(0,1.15fr) minmax(300px,1fr);gap:18px;}
+  .clinic-life-content{padding:21px 20px 23px;}
+  .clinic-life-card:first-child .clinic-life-content{padding:26px 28px 30px;}
+}
+
+@media(max-width:900px){
+  .clinic-life-heading{margin-bottom:42px;}
+  .clinic-life-grid,.clinic-life-grid[data-count="1"]{display:flex;max-width:none;gap:18px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scroll-behavior:smooth;overscroll-behavior-inline:contain;padding:4px 1px 16px;scrollbar-width:none;}
+  .clinic-life-grid::-webkit-scrollbar{display:none;}
+  .clinic-life-card,.clinic-life-card:first-child,.clinic-life-grid[data-count="2"] .clinic-life-card:nth-child(2){flex:0 0 calc(100% - 1px);display:flex;flex-direction:column;grid-row:auto;scroll-snap-align:start;scroll-snap-stop:always;transform:none;}
+  .clinic-life-card:hover{transform:none;}
+  .clinic-life-media,.clinic-life-card:first-child .clinic-life-media{flex:0 0 auto;width:100%;aspect-ratio:16/10;min-height:0;}
+  .clinic-life-media img,.clinic-life-media video,.clinic-life-card:first-child .clinic-life-media img,.clinic-life-card:first-child .clinic-life-media video{position:absolute;inset:0;}
+  .clinic-life-content,.clinic-life-card:first-child .clinic-life-content{padding:26px 27px 29px;}
+  .clinic-life-card:not(:first-child) .clinic-life-title{font-size:clamp(24px,4.5vw,32px);}
+  .clinic-life-description,.clinic-life-card:not(:first-child) .clinic-life-description{-webkit-line-clamp:4;}
+  .clinic-life-dots{display:flex;}
+}
+
+@media(max-width:600px){
+  .clinic-life-heading{margin-bottom:34px;}
+  .clinic-life-grid,.clinic-life-grid[data-count="1"]{gap:14px;}
+  .clinic-life-card,.clinic-life-card:first-child,.clinic-life-grid[data-count="2"] .clinic-life-card:nth-child(2){flex-basis:100%;}
+  .clinic-life-content,.clinic-life-card:first-child .clinic-life-content{padding:23px 21px 25px;}
+  .clinic-life-title,.clinic-life-card:not(:first-child) .clinic-life-title{font-size:27px;}
+  .clinic-life-description,.clinic-life-card:not(:first-child) .clinic-life-description{-webkit-line-clamp:3;}
+  .clinic-life-cta{width:100%;}
+  .lead-form-wrap{margin-top:38px;padding-top:34px;}
+  .lead-form-heading{font-size:27px;}
+  .lead-form{grid-template-columns:1fr;gap:16px;}
+  .lead-field--wide,.lead-form-actions{grid-column:auto;}
+  .lead-submit{width:100%;}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .clinic-life-grid{scroll-behavior:auto;}
+  .clinic-life-card,.clinic-life-cta,.clinic-life-dot{transition:none;}
+  .clinic-life-skeleton-block{animation:none;}
+}

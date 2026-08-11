@@ -1,0 +1,31 @@
+{
+  "name": "bella-dent-clinic-life-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/index.mjs",
+    "dev": "node --watch src/index.mjs",
+    "test": "node --test --test-reporter=spec",
+    "test:coverage": "node --test --experimental-test-coverage",
+    "test:browser": "playwright test",
+    "qa:serve": "node scripts/qa-server.mjs",
+    "sheets:init": "node scripts/init-sheets.mjs",
+    "telegram:set-webhook": "node scripts/set-telegram-webhook.mjs"
+  },
+  "dependencies": {
+    "cloudinary": "^2.10.0",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.6.2",
+    "googleapis": "^174.0.1",
+    "helmet": "^8.3.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1"
+  }
+}
