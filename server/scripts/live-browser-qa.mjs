@@ -35,6 +35,8 @@ try {
       const header = document.getElementById('site-header')?.getBoundingClientRect();
       const leadForm = document.getElementById('lead-form');
       const newsSection = document.getElementById('clinic-life');
+      const reviewsSection = document.getElementById('reviews');
+      const contactsSection = document.getElementById('contacts');
       const apiResponse = await fetch(`${expectedApi}/api/news`);
       const news = await apiResponse.json();
       return {
@@ -46,7 +48,11 @@ try {
         configuredApi: window.BELLA_API_BASE,
         apiStatus: apiResponse.status,
         newsCount: Array.isArray(news) ? news.length : -1,
-        newsHidden: Boolean(newsSection?.hidden)
+        renderedNewsCount: newsSection?.querySelectorAll('.clinic-life-card').length ?? -1,
+        emptyStateVisible: Boolean(newsSection?.querySelector('.clinic-life-empty')?.getBoundingClientRect().height),
+        newsHidden: Boolean(newsSection?.hidden),
+        sectionOrderCorrect: Boolean(reviewsSection?.compareDocumentPosition(newsSection) & Node.DOCUMENT_POSITION_FOLLOWING) &&
+          Boolean(newsSection?.compareDocumentPosition(contactsSection) & Node.DOCUMENT_POSITION_FOLLOWING)
       };
     }, { expectedApi: apiUrl });
 
@@ -57,7 +63,10 @@ try {
     assert(result.configuredApi === apiUrl, `${width}px API configuration mismatch`);
     assert(result.apiStatus === 200, `${width}px browser API request returned ${result.apiStatus}`);
     assert(result.newsCount >= 0 && result.newsCount <= 3, `${width}px public news count is invalid: ${result.newsCount}`);
-    assert(result.newsHidden === (result.newsCount === 0), `${width}px news section visibility does not match API content`);
+    assert(result.newsHidden === false, `${width}px news section must remain visible`);
+    assert(result.sectionOrderCorrect, `${width}px Clinic Life is not between Reviews and Contacts`);
+    assert(result.renderedNewsCount === result.newsCount, `${width}px rendered news count does not match API content`);
+    assert(result.emptyStateVisible === (result.newsCount === 0), `${width}px empty state does not match API content`);
 
     if (width === 390 && process.env.SKIP_LEAD !== '1') {
       await page.locator('#lead-name').fill('Production Browser QA');
