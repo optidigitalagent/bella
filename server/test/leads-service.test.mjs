@@ -5,9 +5,11 @@ import { MemoryRepository } from './helpers.mjs';
 
 test('lead is only marked delivered after every Telegram admin confirms delivery', async () => {
   const repository = new MemoryRepository();
-  const telegram = { sendMessage: async (id) => { if (id === '2') throw new Error('delivery failed'); } };
+  const attempted = [];
+  const telegram = { sendMessage: async (id) => { attempted.push(id); if (id === '2') throw new Error('delivery failed'); } };
   const service = new LeadsService({ repository, telegram, adminIds: ['1', '2'], idFactory: () => 'l1' });
   await assert.rejects(service.submit({ name: 'Анна', phone: '+380671234567', comment: '', requestId: 'lead-request' }));
+  assert.deepEqual(attempted, ['1', '2']);
   assert.equal(repository.leads[0].status, 'notification_failed');
 });
 
