@@ -81,7 +81,7 @@ export function createApp({ config, newsService, leadsService, telegramCms, heal
 
   app.post('/api/telegram/webhook', (request, response, next) => {
     const supplied = request.get('X-Telegram-Bot-Api-Secret-Token');
-    if (!secureEqual(supplied, config.telegram.webhookSecret)) {
+    if (!secureEqual(supplied, config.telegram.cms.webhookSecret)) {
       next(new HttpError(401, 'UNAUTHORIZED', 'Unauthorized'));
       return;
     }

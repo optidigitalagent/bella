@@ -52,7 +52,7 @@ export class MemoryRepository {
 export function makeConfig() {
   return {
     allowedOrigins: new Set(['https://belladentclinik.kr.ua']),
-    telegram: { webhookSecret: 'test-secret' },
+    telegram: { cms: { webhookSecret: 'test-secret' } },
     rateLimits: { leadWindowMs: 60_000, leadMax: 100, webhookWindowMs: 60_000, webhookMax: 100 }
   };
 }

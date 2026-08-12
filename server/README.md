@@ -36,11 +36,15 @@ Database integration tests use `TEST_DATABASE_URL`. They create and remove a uni
 ## Railway architecture
 
 ```text
-Telegram -> bella-dent-api -> PostgreSQL -> website API
-                       |----> Cloudinary
+CMS Telegram bot -> webhook -> bella-dent-api -> PostgreSQL -> website API
+                                      |--------> Cloudinary
 
-Website lead -> bella-dent-api -> PostgreSQL -> Telegram admins
+Website lead -> bella-dent-api -> PostgreSQL -> Leads Telegram bot -> lead admins
 ```
+
+The CMS and Leads bots are independent transports. Only the CMS bot owns the
+Telegram webhook and Clinic Life commands. The Leads bot is outbound-only and
+uses `sendMessage` to notify its dedicated administrator list.
 
 1. Keep the API service root directory at `/server` and config path at `/server/railway.json`.
 2. Add a PostgreSQL service to the same Railway project.
@@ -65,9 +69,11 @@ The rolling maximum-three rule uses a PostgreSQL transaction and transaction-sco
 | `DATABASE_POOL_MAX` | no | Pool size; default `10`. |
 | `DATABASE_CONNECTION_TIMEOUT_MS` | no | Default `10000`. |
 | `DATABASE_IDLE_TIMEOUT_MS` | no | Default `30000`. |
-| `TELEGRAM_BOT_TOKEN` | yes | BotFather token. |
-| `TELEGRAM_ADMIN_IDS` | yes | Comma-separated numeric CMS/admin IDs. |
-| `TELEGRAM_WEBHOOK_SECRET` | yes | URL-safe Telegram webhook secret. |
+| `TELEGRAM_BOT_TOKEN` | yes | Existing Clinic Life CMS bot token. |
+| `TELEGRAM_ADMIN_IDS` | yes | Comma-separated numeric IDs authorized to operate the CMS. |
+| `TELEGRAM_WEBHOOK_SECRET` | yes | URL-safe secret for the CMS bot webhook. |
+| `TELEGRAM_LEADS_BOT_TOKEN` | yes | Separate outbound-only website lead notification bot token. |
+| `TELEGRAM_LEADS_ADMIN_IDS` | yes | Comma-separated numeric IDs that receive website leads. |
 | `CLOUDINARY_CLOUD_NAME` | yes | Cloudinary cloud name. |
 | `CLOUDINARY_API_KEY` | yes | Server-side API key. |
 | `CLOUDINARY_API_SECRET` | yes | Server-side API secret. |
@@ -91,7 +97,10 @@ Publishing and restoring serialize in PostgreSQL, make the selected item newest,
 
 Cloudinary uploads are signed server-side. PostgreSQL stores no binary media. Canceled/expired draft assets are removed where possible; replacement deletes the prior asset only after the new database value is committed.
 
-The Telegram webhook is `${PUBLIC_BASE_URL}/api/telegram/webhook` and is protected by `X-Telegram-Bot-Api-Secret-Token`. Only IDs in `TELEGRAM_ADMIN_IDS` can use the CMS or receive leads.
+The CMS Telegram webhook is `${PUBLIC_BASE_URL}/api/telegram/webhook` and is
+protected by `X-Telegram-Bot-Api-Secret-Token`. Only IDs in
+`TELEGRAM_ADMIN_IDS` can use the CMS. The Leads bot has no webhook and sends
+website leads only to `TELEGRAM_LEADS_ADMIN_IDS`.
 
 Generate a webhook secret without printing other credentials:
 
@@ -103,10 +112,11 @@ node -e "console.log(require('node:crypto').randomBytes(32).toString('base64url'
 
 1. Confirm `/health` reports both API and database healthy.
 2. Confirm `/api/news` returns at most three safe public records, newest first.
-3. Verify Telegram `/start`, authorization, create/edit/archive/restore, and real Cloudinary media.
+3. Verify the CMS bot `/start`, authorization, create/edit/archive/restore, and real Cloudinary media.
 4. Publish A-E and verify `A`; `B,A`; `C,B,A`; `D,C,B`; `E,D,C`.
 5. Confirm the deployed website changes without a frontend redeploy.
-6. Submit a real lead and confirm Telegram delivery plus a `delivered` database row.
+6. Start the separate Leads bot from each recipient account, submit a real lead,
+   and confirm delivery from that bot plus a `delivered` database row.
 
 Do not report Telegram live-message checks as passed until the administrator has started the bot.
 

@@ -9,6 +9,8 @@ const envSchema = z.object({
   TELEGRAM_BOT_TOKEN: z.string().trim().default(''),
   TELEGRAM_ADMIN_IDS: z.string().trim().default(''),
   TELEGRAM_WEBHOOK_SECRET: z.string().trim().default(''),
+  TELEGRAM_LEADS_BOT_TOKEN: z.string().trim().default(''),
+  TELEGRAM_LEADS_ADMIN_IDS: z.string().trim().default(''),
   CLOUDINARY_CLOUD_NAME: z.string().trim().default(''),
   CLOUDINARY_API_KEY: z.string().trim().default(''),
   CLOUDINARY_API_SECRET: z.string().trim().default(''),
@@ -25,20 +27,26 @@ const envSchema = z.object({
   DRAFT_TTL_MS: z.coerce.number().int().positive().default(3_600_000)
 });
 
-function parseAdminIds(value) {
-  return [...new Set(value.split(',').map((item) => item.trim()).filter(Boolean))];
+function parseAdminIds(value, variableName) {
+  if (!value) return [];
+  const parsed = value.split(',').map((item) => item.trim());
+  if (parsed.some((id) => !/^\d+$/.test(id))) {
+    throw new Error(`${variableName} must contain only comma-separated numeric IDs`);
+  }
+  return [...new Set(parsed)];
 }
 
 export function loadConfig(source = process.env) {
   const env = envSchema.parse(source);
-  const adminIds = parseAdminIds(env.TELEGRAM_ADMIN_IDS);
-  if (adminIds.some((id) => !/^\d+$/.test(id))) throw new Error('TELEGRAM_ADMIN_IDS must contain only comma-separated numeric IDs');
+  const cmsAdminIds = parseAdminIds(env.TELEGRAM_ADMIN_IDS, 'TELEGRAM_ADMIN_IDS');
+  const leadsAdminIds = parseAdminIds(env.TELEGRAM_LEADS_ADMIN_IDS, 'TELEGRAM_LEADS_ADMIN_IDS');
   if (env.TELEGRAM_WEBHOOK_SECRET && !/^[A-Za-z0-9_-]{1,256}$/.test(env.TELEGRAM_WEBHOOK_SECRET)) {
     throw new Error('TELEGRAM_WEBHOOK_SECRET must contain 1-256 URL-safe characters');
   }
   if (env.NODE_ENV === 'production') {
     const required = [
       'PUBLIC_BASE_URL', 'TELEGRAM_BOT_TOKEN', 'TELEGRAM_ADMIN_IDS', 'TELEGRAM_WEBHOOK_SECRET',
+      'TELEGRAM_LEADS_BOT_TOKEN', 'TELEGRAM_LEADS_ADMIN_IDS',
       'CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET', 'DATABASE_URL'
     ];
     const missing = required.filter((name) => !env[name]);
@@ -53,9 +61,15 @@ export function loadConfig(source = process.env) {
     siteOrigin: env.SITE_ORIGIN.replace(/\/$/, ''),
     allowedOrigins: new Set(env.ALLOWED_ORIGINS.split(',').map((item) => item.trim().replace(/\/$/, '')).filter(Boolean)),
     telegram: {
-      botToken: env.TELEGRAM_BOT_TOKEN,
-      adminIds,
-      webhookSecret: env.TELEGRAM_WEBHOOK_SECRET
+      cms: {
+        botToken: env.TELEGRAM_BOT_TOKEN,
+        adminIds: cmsAdminIds,
+        webhookSecret: env.TELEGRAM_WEBHOOK_SECRET
+      },
+      leads: {
+        botToken: env.TELEGRAM_LEADS_BOT_TOKEN,
+        adminIds: leadsAdminIds
+      }
     },
     cloudinary: {
       cloudName: env.CLOUDINARY_CLOUD_NAME,
