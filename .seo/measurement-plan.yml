@@ -1,0 +1,17 @@
+business_objective: Define a verified business outcome
+visibility_metric: Search visibility measure; not a lead or outcome
+intent_metric: User intent signal; not a connected interaction
+connected_interaction_metric: Confirmed connection such as an answered call or accepted form
+qualified_lead_metric: Lead qualified by the business under a documented rule
+outcome_metric: Verified appointment revenue or other business outcome
+guardrail_kpis: []
+data_sources: []
+baseline_window: Define dates timezone source and filters
+observation_windows:
+  technical: 0-7 days
+  discovery: 28 days
+  outcome: 90 days or the documented business cycle
+attribution_limits: Do not infer outcomes from clicks or submit intent
+decision_rule: Define success failure rework and rollback thresholds before implementation
+privacy_rules:
+  - Do not send personal or medical data to client-side analytics

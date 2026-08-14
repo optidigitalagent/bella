@@ -1,0 +1,16 @@
+{
+  "repository": "optidigitalagent/bella",
+  "project_id": "bella",
+  "pull_request": null,
+  "merged_sha": null,
+  "deployed_sha": null,
+  "production_url": null,
+  "production_verified_at": null,
+  "production_matches_deploy": false,
+  "live_smoke_passed": false,
+  "analytics_qa": "pending",
+  "state_files_updated": false,
+  "stale_branches_recorded": false,
+  "validation_results_recorded": false,
+  "closed": false
+}

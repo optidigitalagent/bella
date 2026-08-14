@@ -1,0 +1,11 @@
+events:
+  - name: "phone_click"
+    stage: "conversion_intent"
+    outcome_confirmed: false
+    allowed_parameters: ["page_path", "placement"]
+    prohibited_parameters: ["name", "phone", "email", "diagnosis", "treatment"]
+  - name: "form_submit_confirmed"
+    stage: "connected_interaction"
+    outcome_confirmed: true
+    allowed_parameters: ["page_path", "form_id"]
+    prohibited_parameters: ["form_field_values", "medical_details"]

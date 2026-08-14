@@ -1,0 +1,12 @@
+sources:
+  - id: ""
+    provider: ""
+    property_or_scope: ""
+    market: ""
+    language: ""
+    device: ""
+    collected_at: ""
+    owner: ""
+    access_level: "read-only"
+    latency: ""
+    limitations: ""

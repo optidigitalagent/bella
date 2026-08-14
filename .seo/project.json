@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "business_name": "Bella Dent Clinic",
+  "domain": "https://belladentclinik.kr.ua",
+  "market": "Ukraine, Kryvyi Rih",
+  "primary_language": "uk",
+  "site_type": "local-business",
+  "initialized_at": "2026-08-14T06:06:33Z",
+  "status": "intake",
+  "secrets_policy": "Do not store credentials, tokens, private exports, personal data, or medical data in .seo"
+}
