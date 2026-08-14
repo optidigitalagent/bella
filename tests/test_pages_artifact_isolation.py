@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import importlib.util
+from html.parser import HTMLParser
 import os
 from pathlib import Path
 import re
 import tempfile
 import unittest
+from urllib.parse import urlsplit
+import xml.etree.ElementTree as ET
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
@@ -23,6 +26,43 @@ def load_script(name: str, module_name: str):
 
 BUILDER = load_script("build-pages-artifact.py", "test_pages_builder")
 VERIFIER = load_script("verify-pages-artifact.py", "test_pages_verifier")
+
+EXPECTED_ROBOTS = (
+    "User-agent: *\n"
+    "Allow: /\n"
+    "\n"
+    "Sitemap: https://belladentclinik.kr.ua/sitemap.xml\n"
+).encode("utf-8")
+SITEMAP_NAMESPACE = "http://www.sitemaps.org/schemas/sitemap/0.9"
+EXPECTED_SITEMAP_LOCS = [
+    "https://belladentclinik.kr.ua/",
+    "https://belladentclinik.kr.ua/price.html",
+]
+
+
+class TechnicalSeoHTMLParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.canonicals: list[str] = []
+        self.hrefs: list[str] = []
+        self.ids: set[str] = set()
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        attributes = dict(attrs)
+        element_id = attributes.get("id")
+        if element_id:
+            self.ids.add(element_id)
+        if tag == "link" and "canonical" in (attributes.get("rel") or "").casefold().split():
+            self.canonicals.append(attributes.get("href") or "")
+        if tag == "a" and attributes.get("href") is not None:
+            self.hrefs.append(attributes["href"] or "")
+
+
+def parse_repository_html(relative_path: str) -> TechnicalSeoHTMLParser:
+    parser = TechnicalSeoHTMLParser()
+    parser.feed((REPOSITORY_ROOT / relative_path).read_text(encoding="utf-8", errors="strict"))
+    parser.close()
+    return parser
 
 
 class ArtifactFixture(unittest.TestCase):
@@ -343,6 +383,134 @@ class DependencyFailureTests(ArtifactFixture):
         self.build()
         with self.assertRaises(BUILDER.ArtifactError):
             self.verify()
+
+
+class RepositoryTechnicalSeoContractTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.manifest_path = REPOSITORY_ROOT / "pages-public-manifest.txt"
+        cls.manifest_entries, _ = BUILDER.read_manifest(cls.manifest_path)
+        cls.temporary_directory = tempfile.TemporaryDirectory(
+            prefix=".pages-contract-",
+            dir=REPOSITORY_ROOT,
+        )
+        cls.output = Path(cls.temporary_directory.name) / "_site"
+        cls.build_report = BUILDER.build_artifact(
+            REPOSITORY_ROOT,
+            cls.manifest_path,
+            cls.output,
+        )
+        cls.verify_report = VERIFIER.verify_artifact(
+            REPOSITORY_ROOT,
+            cls.manifest_path,
+            cls.output,
+        )
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls.temporary_directory.cleanup()
+
+    def test_manifest_and_candidate_artifact_have_exact_public_inventory(self) -> None:
+        expected_new_files = {"robots.txt", "sitemap.xml"}
+        expected_protected_files = {".nojekyll", "CNAME"}
+        forbidden_prefixes = (".github/", ".seo/", "docs/", "scripts/", "server/", "tests/")
+
+        self.assertEqual(len(self.manifest_entries), 56)
+        self.assertEqual(len(set(self.manifest_entries)), 56)
+        self.assertTrue(expected_new_files.issubset(self.manifest_entries))
+        self.assertTrue(expected_protected_files.issubset(self.manifest_entries))
+        self.assertNotIn("pages-public-manifest.txt", self.manifest_entries)
+        self.assertNotIn("bella-dent-clinic-fixed.html", self.manifest_entries)
+        self.assertFalse(
+            any(entry.startswith(forbidden_prefixes) for entry in self.manifest_entries)
+        )
+        self.assertEqual(self.build_report["file_count"], 56)
+        self.assertEqual(self.verify_report["file_count"], 56)
+        self.assertEqual(self.verify_report["status"], "verified")
+
+        artifact_files = {
+            path.relative_to(self.output).as_posix()
+            for path in self.output.rglob("*")
+            if path.is_file()
+        }
+        self.assertEqual(artifact_files, set(self.manifest_entries))
+        for relative_path in expected_new_files | expected_protected_files:
+            self.assertEqual(
+                (self.output / relative_path).read_bytes(),
+                (REPOSITORY_ROOT / relative_path).read_bytes(),
+            )
+
+    def test_robots_policy_is_exact_utf8_lf_text(self) -> None:
+        raw = (REPOSITORY_ROOT / "robots.txt").read_bytes()
+        self.assertEqual(raw, EXPECTED_ROBOTS)
+        self.assertFalse(raw.startswith(b"\xef\xbb\xbf"))
+        self.assertNotIn(b"\r", raw)
+        text = raw.decode("utf-8", errors="strict")
+        directives = [line for line in text.splitlines() if line.startswith("Sitemap:")]
+        self.assertEqual(directives, ["Sitemap: https://belladentclinik.kr.ua/sitemap.xml"])
+        self.assertNotRegex(text, r"(?im)^\s*Disallow\s*:")
+        for private_path in (".seo", ".github", "server/", "tests/", "scripts/"):
+            self.assertNotIn(private_path, text)
+
+    def test_sitemap_has_exact_ordered_canonical_inventory(self) -> None:
+        raw = (REPOSITORY_ROOT / "sitemap.xml").read_bytes()
+        self.assertTrue(raw.startswith(b'<?xml version="1.0" encoding="UTF-8"?>\n'))
+        self.assertTrue(raw.endswith(b"\n"))
+        self.assertFalse(raw.startswith(b"\xef\xbb\xbf"))
+        self.assertNotIn(b"\r", raw)
+
+        root = ET.fromstring(raw)
+        url_tag = f"{{{SITEMAP_NAMESPACE}}}url"
+        loc_tag = f"{{{SITEMAP_NAMESPACE}}}loc"
+        self.assertEqual(root.tag, f"{{{SITEMAP_NAMESPACE}}}urlset")
+        urls = list(root)
+        self.assertEqual([element.tag for element in urls], [url_tag, url_tag])
+        for element in urls:
+            self.assertEqual([child.tag for child in element], [loc_tag])
+        locs = [element[0].text for element in urls]
+        self.assertEqual(locs, EXPECTED_SITEMAP_LOCS)
+        self.assertEqual(len(locs), len(set(locs)))
+        prohibited = {"lastmod", "changefreq", "priority"}
+        self.assertFalse(
+            any(element.tag.rsplit("}", 1)[-1] in prohibited for element in root.iter())
+        )
+
+    def test_html_canonicals_are_unique_absolute_and_preferred(self) -> None:
+        expected = {
+            "index.html": "https://belladentclinik.kr.ua/",
+            "price.html": "https://belladentclinik.kr.ua/price.html",
+        }
+        for relative_path, canonical in expected.items():
+            with self.subTest(relative_path=relative_path):
+                parsed = parse_repository_html(relative_path)
+                self.assertEqual(parsed.canonicals, [canonical])
+                url = urlsplit(canonical)
+                self.assertEqual(url.scheme, "https")
+                self.assertEqual(url.netloc, "belladentclinik.kr.ua")
+                self.assertNotIn(url.path, {"/index.html", "/price"})
+
+    def test_price_home_links_use_root_and_valid_home_fragments(self) -> None:
+        price = parse_repository_html("price.html")
+        home = parse_repository_html("index.html")
+
+        internal_index_targets = []
+        for href in price.hrefs:
+            url = urlsplit(href)
+            if not url.scheme and not url.netloc and url.path.casefold().endswith("index.html"):
+                internal_index_targets.append(href)
+        self.assertEqual(internal_index_targets, [])
+        self.assertEqual(price.hrefs.count("/"), 5)
+        self.assertEqual(price.hrefs.count("/#contacts"), 4)
+        self.assertEqual(price.hrefs.count("/#services"), 1)
+        self.assertEqual(price.hrefs.count("/#doctors"), 1)
+
+        normalized_fragments = {
+            urlsplit(href).fragment
+            for href in price.hrefs
+            if href.startswith("/#")
+        }
+        self.assertTrue(normalized_fragments)
+        self.assertTrue(normalized_fragments.issubset(home.ids))
 
 
 class WorkflowPolicyTests(unittest.TestCase):

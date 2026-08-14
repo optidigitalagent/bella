@@ -52,5 +52,7 @@ images/bella-dent-mark.png.png
 index.html
 price.html
 prices.js
+robots.txt
 sheets-loader.js
 site-config.js
+sitemap.xml
