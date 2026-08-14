@@ -1,0 +1,12 @@
+verified_at: ""
+robots_url: ""
+googlebot:
+  decision: "unchanged"
+  rationale: ""
+oai_searchbot:
+  decision: "unchanged"
+  rationale: ""
+gptbot:
+  decision: "unchanged"
+  rationale: ""
+authorized_by: ""

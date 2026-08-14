@@ -1,0 +1,42 @@
+{
+  "selected_at": "2026-08-14T06:06:33Z",
+  "requested_mode": "audit",
+  "skills": [
+    {
+      "name": "seo-command-center",
+      "reason": "Selected during deterministic initialization"
+    },
+    {
+      "name": "seo-market-intelligence",
+      "reason": "Selected during deterministic initialization"
+    },
+    {
+      "name": "seo-technical-engineer",
+      "reason": "Selected during deterministic initialization"
+    },
+    {
+      "name": "seo-content-architect",
+      "reason": "Selected during deterministic initialization"
+    },
+    {
+      "name": "seo-local-growth",
+      "reason": "Selected during deterministic initialization"
+    },
+    {
+      "name": "seo-ai-discovery",
+      "reason": "Selected during deterministic initialization"
+    },
+    {
+      "name": "seo-authority-builder",
+      "reason": "Selected during deterministic initialization"
+    },
+    {
+      "name": "seo-measurement-control",
+      "reason": "Selected during deterministic initialization"
+    }
+  ],
+  "excluded_skills": [
+    "seo-ecommerce-growth",
+    "seo-international-architecture"
+  ]
+}

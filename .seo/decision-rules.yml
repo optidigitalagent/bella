@@ -1,0 +1,11 @@
+rules:
+  - initiative_id: ""
+    hypothesis: ""
+    primary_kpi: ""
+    guardrails: []
+    baseline_window: ""
+    minimum_observation_window: ""
+    success: ""
+    failure: ""
+    rework_or_rollback: ""
+    confounders: []

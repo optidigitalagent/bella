@@ -1,0 +1,26 @@
+{
+  "granted_by": "user via direct execution prompt",
+  "granted_at": "2026-08-14T06:06:33Z",
+  "expires_at": null,
+  "repository": "optidigitalagent/bella",
+  "project_id": "bella",
+  "scope": "One-time Bella PR 0B authorization: audit, branch, add-only .seo edit, tests, one commit, normal push, and one draft pull request",
+  "permissions": {
+    "audit": true,
+    "branch": true,
+    "edit": true,
+    "implement": false,
+    "commit": true,
+    "push": true,
+    "open_pr": true,
+    "draft_pr": true,
+    "ready_for_review": false,
+    "merge": false,
+    "deploy": false,
+    "publish": false,
+    "sitemap_submit": false,
+    "external_action": false,
+    "release": false,
+    "release_close": false
+  }
+}

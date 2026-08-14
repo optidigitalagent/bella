@@ -1,0 +1,31 @@
+{
+  "repository": "optidigitalagent/bella",
+  "project_id": "bella",
+  "default_branch": "main",
+  "production_url": "https://belladentclinik.kr.ua",
+  "requested_action": "draft_pr",
+  "authorization_level": "audit, branch, edit, tests, commit, push, draft_pr",
+  "client_industry": "dentistry",
+  "primary_market": "Ukraine, Kryvyi Rih",
+  "primary_language": "uk",
+  "verified_at": "2026-08-14T06:06:33Z",
+  "remote_main_sha": "aa87825f48ec4feb9bbe6af18b5badca020fa529",
+  "local_main_sha": "aa87825f48ec4feb9bbe6af18b5badca020fa529",
+  "deployed_sha": "aa87825f48ec4feb9bbe6af18b5badca020fa529",
+  "open_prs": [],
+  "recently_merged_prs": [6],
+  "active_branches": [
+    "agent/clinic-life-final-design",
+    "agent/production-e2e-qa",
+    "agent/split-telegram-cms-leads-bots",
+    "chore/bella-pages-publishing-isolation",
+    "feat/clinic-life-telegram-cms",
+    "fix/configure-production-api"
+  ],
+  "handoff_sha": "f8fcd72af8835db44cf17876e16c53c5c6cbb2c6",
+  "handoff_matches_remote": true,
+  "overlapping_active_pr": false,
+  "production_matches_deploy": true,
+  "external_state_verified": true,
+  "worktree_clean": true
+}

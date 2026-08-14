@@ -1,0 +1,5 @@
+{
+  "risks": [
+    {"id": "R-001", "area": "state", "description": "Repository, deployment, and external state are not yet reconciled", "likelihood": "unknown", "impact": "high", "mitigation": "Complete read-only preflight before implementation", "owner": "", "status": "open"}
+  ]
+}

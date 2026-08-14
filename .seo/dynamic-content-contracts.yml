@@ -1,0 +1,11 @@
+contracts:
+  - name: ""
+    source_of_truth: ""
+    source_url_or_id: ""
+    access_level: "public-read"
+    refresh_cadence: ""
+    static_fallback: ""
+    failure_behavior: "preserve_last_verified_fallback"
+    drift_check: ""
+    owner: ""
+    approved_at: ""
