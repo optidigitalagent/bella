@@ -57,6 +57,10 @@ def normalized_text(parts: list[str] | str) -> str:
     return " ".join(text.split())
 
 
+def canonicalize_newlines_to_lf(content: bytes) -> bytes:
+    return content.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+
+
 class TechnicalSeoHTMLParser(HTMLParser):
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
@@ -712,9 +716,21 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
         price_raw = price_path.read_bytes()
         self.assertIn(b"<body", price_raw)
         price_body = b"<body" + price_raw.split(b"<body", 1)[1]
+        canonical_price_body = canonicalize_newlines_to_lf(price_body)
+        approved_price_body_hash = "48a863421861d352123e3aa5363e5dbb7c1b65a103ba68135457d9b367d02a83"
         self.assertEqual(
-            hashlib.sha256(price_body).hexdigest(),
-            "988dba59828f14d8aba085ab62ab19fbd4507245e72713811b115e86f2c00489",
+            hashlib.sha256(canonical_price_body).hexdigest(),
+            approved_price_body_hash,
+        )
+        synthetic_crlf_price_body = canonical_price_body.replace(b"\n", b"\r\n")
+        self.assertEqual(
+            hashlib.sha256(canonicalize_newlines_to_lf(synthetic_crlf_price_body)).hexdigest(),
+            approved_price_body_hash,
+        )
+        mutated_price_body = canonical_price_body.replace(b"<body", b"<body data-mutation", 1)
+        self.assertNotEqual(
+            hashlib.sha256(canonicalize_newlines_to_lf(mutated_price_body)).hexdigest(),
+            approved_price_body_hash,
         )
         self.assertEqual(
             hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
