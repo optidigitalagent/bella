@@ -1,11 +1,34 @@
 {
-  "captured_at": "",
-  "environment": "",
-  "source_sha": "",
-  "production_url": "",
-  "source_html_sample": [],
-  "rendered_dom_sample": [],
+  "captured_at": "2026-08-16T08:15:59Z",
+  "environment": "production; GitHub Pages workflow build from main; deployment 5921688840; workflow run 31891801908",
+  "source_sha": "1195107fabf3525d48cf11515bdc0ffb8a0f183d",
+  "production_url": "https://belladentclinik.kr.ua",
+  "source_html_sample": [
+    "branch=main; deployed_sha=1195107fabf3525d48cf11515bdc0ffb8a0f183d",
+    "pages_workflow=Bella Pages artifact isolation; run=31891801908; build_job=95029074327; deploy_job=95029100651; deployment=5921688840; status=success",
+    "artifact_id=9248733312; file_count=56; total_bytes=65503575; tree=c4cfd74020e782a74c1341613d8072a0a52246d4",
+    "artifact_git_aggregate_sha256=91db82f83e6ec8a550240f0b05f05a5650eeb157771d20fbabd8135ae5fca95a; manifest_sha256=0888f7c65e3e6cb1db0780f0f165c057c56dd5a9e49757d9b465a0b55df2609d; archive_digest=sha256:a414343efd0ca991300c584ae2c9c4728f3cfd122fb9cf46363cdb152303562f",
+    "public_html_routes=/,/index.html,/price.html; robots=/robots.txt; sitemap=/sitemap.xml",
+    "home_canonical=https://belladentclinik.kr.ua/; price_canonical=https://belladentclinik.kr.ua/price.html",
+    "robots=allow_all_with_production_sitemap; sitemap_urls=https://belladentclinik.kr.ua/|https://belladentclinik.kr.ua/price.html"
+  ],
+  "rendered_dom_sample": [
+    "2026-08-16 local HEAD: / 200; /index.html 200; /price.html 200; /robots.txt 200; /sitemap.xml 200",
+    "host_protocol_normalization: http_apex 301 to https_apex; http_www 301 to https_apex; https_www 301 to https_apex",
+    "platform_path_behavior: /price 200 with price.html canonical; /price/ 404",
+    "isolation_404: /.seo/project.json, /server/package.json, /.github/workflows/pages.yml, /pages-public-manifest.txt, /bella-dent-clinic-fixed.html, and random missing route",
+    "structured_data_count=0; analytics_presence=absent",
+    "api_separation=https://bella-dent-api-production.up.railway.app; PR 1 changed no API, CORS, Railway, lead-form, Clinic Life, or Sheets integration code",
+    "retained_propagation: Check-Host public 200/private 404 reports across nine responding nodes; one node timeout; retained API health across two Ukraine and six other valid nodes"
+  ],
   "field_performance_source": null,
   "lab_performance_source": null,
-  "known_gaps": []
+  "known_gaps": [
+    "Published entity, NAP, contact, map, Bella/Nika, doctor, service, price, review, case, and medical values remain owner_confirmation_pending or require professional review; none are verified by this baseline",
+    "Missing source asset: images/фото для прайса.jpg",
+    "Large/eager images remain future performance work; no Lighthouse, CrUX, ranking, traffic, or modeled score is recorded",
+    "Sheet-fed doctor values reach innerHTML sinks and require a later safe-DOM hardening PR",
+    "No deployed analytics or verified conversion measurement",
+    "Earlier local route reliability was limited; exact deployment/artifact and retained multi-region evidence remain the fallback"
+  ]
 }
