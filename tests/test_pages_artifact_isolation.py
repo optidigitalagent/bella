@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 from html.parser import HTMLParser
+import json
 import os
 from pathlib import Path
 import re
@@ -38,6 +40,21 @@ EXPECTED_SITEMAP_LOCS = [
     "https://belladentclinik.kr.ua/",
     "https://belladentclinik.kr.ua/price.html",
 ]
+SITE_ROOT = "https://belladentclinik.kr.ua/"
+LOGO_URL = f"{SITE_ROOT}images/bella-dent-mark.png.png"
+INSTAGRAM_URL = "https://www.instagram.com/bella.dent.clinic"
+FACEBOOK_URL = "https://www.facebook.com/share/1JF7VKAp6X/?mibextid=wwXIfr"
+MAP_URL = "https://maps.app.goo.gl/4f5ZoSzFxpXF6iEY8"
+MAP_EMBED_URL = (
+    "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2643.5!2d33.4757767!3d48.0183088"
+    "!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x40dae1c011d7f895:"
+    "0x5bf876226c7311c0!2z0YPQuy4g0JLQsNGC0YPRgtC40L3QsCwgNDMvM9CQ!5e0!3m2!1sru!2sua!4v1234567890"
+)
+
+
+def normalized_text(parts: list[str] | str) -> str:
+    text = parts if isinstance(parts, str) else " ".join(parts)
+    return " ".join(text.split())
 
 
 class TechnicalSeoHTMLParser(HTMLParser):
@@ -46,16 +63,70 @@ class TechnicalSeoHTMLParser(HTMLParser):
         self.canonicals: list[str] = []
         self.hrefs: list[str] = []
         self.ids: set[str] = set()
+        self.links: list[dict[str, str | None]] = []
+        self.metas: list[dict[str, str | None]] = []
+        self.anchors: list[dict[str, object]] = []
+        self.iframes: list[dict[str, str | None]] = []
+        self.img_alts: list[str] = []
+        self.json_ld_texts: list[str] = []
+        self.titles: list[str] = []
+        self.body_text: list[str] = []
+        self._anchor_stack: list[dict[str, object]] = []
+        self._json_ld_parts: list[str] | None = None
+        self._title_parts: list[str] | None = None
+        self._in_body = False
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         attributes = dict(attrs)
         element_id = attributes.get("id")
         if element_id:
             self.ids.add(element_id)
-        if tag == "link" and "canonical" in (attributes.get("rel") or "").casefold().split():
-            self.canonicals.append(attributes.get("href") or "")
-        if tag == "a" and attributes.get("href") is not None:
-            self.hrefs.append(attributes["href"] or "")
+        if tag == "link":
+            self.links.append(attributes)
+            if "canonical" in (attributes.get("rel") or "").casefold().split():
+                self.canonicals.append(attributes.get("href") or "")
+        elif tag == "meta":
+            self.metas.append(attributes)
+        elif tag == "a":
+            anchor: dict[str, object] = {"attributes": attributes, "text": []}
+            self.anchors.append(anchor)
+            self._anchor_stack.append(anchor)
+            if attributes.get("href") is not None:
+                self.hrefs.append(attributes["href"] or "")
+        elif tag == "iframe":
+            self.iframes.append(attributes)
+        elif tag == "img":
+            self.img_alts.append(attributes.get("alt") or "")
+        elif tag == "script" and attributes.get("type") == "application/ld+json":
+            self._json_ld_parts = []
+        elif tag == "title":
+            self._title_parts = []
+        elif tag == "body":
+            self._in_body = True
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag == "a" and self._anchor_stack:
+            self._anchor_stack.pop()
+        elif tag == "script" and self._json_ld_parts is not None:
+            self.json_ld_texts.append("".join(self._json_ld_parts))
+            self._json_ld_parts = None
+        elif tag == "title" and self._title_parts is not None:
+            self.titles.append(normalized_text(self._title_parts))
+            self._title_parts = None
+        elif tag == "body":
+            self._in_body = False
+
+    def handle_data(self, data: str) -> None:
+        if self._anchor_stack:
+            text = self._anchor_stack[-1]["text"]
+            if isinstance(text, list):
+                text.append(data)
+        if self._json_ld_parts is not None:
+            self._json_ld_parts.append(data)
+        if self._title_parts is not None:
+            self._title_parts.append(data)
+        if self._in_body:
+            self.body_text.append(data)
 
 
 def parse_repository_html(relative_path: str) -> TechnicalSeoHTMLParser:
@@ -409,6 +480,263 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
     @classmethod
     def tearDownClass(cls) -> None:
         cls.temporary_directory.cleanup()
+
+    def test_page_identity_metadata_is_exact_and_description_free(self) -> None:
+        page_contracts = {
+            "index.html": {
+                "title": "Bella Dent Clinic — Центр сучасної стоматології",
+                "canonical": SITE_ROOT,
+            },
+            "price.html": {
+                "title": "Прайс клініки — Bella Dent Clinic",
+                "canonical": f"{SITE_ROOT}price.html",
+            },
+        }
+        common_properties = {
+            "og:type": "website",
+            "og:locale": "uk_UA",
+            "og:site_name": "Bella Dent Clinic",
+            "og:image": LOGO_URL,
+            "og:image:alt": "Bella Dent Clinic",
+        }
+        common_names = {
+            "twitter:card": "summary",
+            "twitter:image": LOGO_URL,
+            "twitter:image:alt": "Bella Dent Clinic",
+        }
+
+        for relative_path, contract in page_contracts.items():
+            with self.subTest(relative_path=relative_path):
+                parsed = parse_repository_html(relative_path)
+                self.assertEqual(parsed.titles, [contract["title"]])
+                self.assertEqual(parsed.canonicals, [contract["canonical"]])
+
+                favicons = [
+                    link
+                    for link in parsed.links
+                    if "icon" in (link.get("rel") or "").casefold().split()
+                ]
+                self.assertEqual(
+                    favicons,
+                    [{"rel": "icon", "type": "image/png", "href": LOGO_URL}],
+                )
+
+                expected_properties = {
+                    **common_properties,
+                    "og:title": contract["title"],
+                    "og:url": contract["canonical"],
+                }
+                expected_names = {
+                    **common_names,
+                    "twitter:title": contract["title"],
+                }
+                for attribute, expected in (
+                    ("property", expected_properties),
+                    ("name", expected_names),
+                ):
+                    for key, value in expected.items():
+                        matches = [
+                            meta.get("content")
+                            for meta in parsed.metas
+                            if meta.get(attribute) == key
+                        ]
+                        self.assertEqual(matches, [value], f"{relative_path}: {key}")
+
+                self.assertFalse(
+                    any(
+                        (meta.get("name") or "").casefold() == "description"
+                        or meta.get("property") == "og:description"
+                        or meta.get("name") == "twitter:description"
+                        for meta in parsed.metas
+                    )
+                )
+
+    def test_homepage_json_ld_is_exact_visible_fact_entity(self) -> None:
+        index = parse_repository_html("index.html")
+        price = parse_repository_html("price.html")
+        self.assertEqual(len(index.json_ld_texts), 1)
+        self.assertEqual(price.json_ld_texts, [])
+
+        entity = json.loads(index.json_ld_texts[0])
+        expected = {
+            "@context": "https://schema.org",
+            "@type": "Dentist",
+            "@id": f"{SITE_ROOT}#dentist",
+            "name": "Bella Dent Clinic",
+            "url": SITE_ROOT,
+            "logo": LOGO_URL,
+            "image": LOGO_URL,
+            "telephone": "+380964303719",
+            "email": "klinikanika@gmail.com",
+            "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "вул. Федора Караманиць, 43/3А",
+                "addressLocality": "Кривий Ріг",
+                "addressRegion": "Дніпропетровська область",
+                "postalCode": "50000",
+                "addressCountry": "UA",
+            },
+            "geo": {
+                "@type": "GeoCoordinates",
+                "latitude": 48.01832,
+                "longitude": 33.4757793,
+            },
+            "openingHoursSpecification": [
+                {
+                    "@type": "OpeningHoursSpecification",
+                    "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+                    "opens": "09:00",
+                    "closes": "18:00",
+                },
+                {
+                    "@type": "OpeningHoursSpecification",
+                    "dayOfWeek": "Saturday",
+                    "opens": "09:00",
+                    "closes": "14:00",
+                },
+                {
+                    "@type": "OpeningHoursSpecification",
+                    "dayOfWeek": "Sunday",
+                    "opens": "09:00",
+                    "closes": "16:00",
+                },
+            ],
+            "sameAs": [INSTAGRAM_URL],
+        }
+        self.assertEqual(entity, expected)
+
+    def test_json_ld_excludes_unapproved_entity_and_medical_properties(self) -> None:
+        entity = json.loads(parse_repository_html("index.html").json_ld_texts[0])
+        disallowed = {
+            "alternateName",
+            "aggregateRating",
+            "review",
+            "employee",
+            "founder",
+            "medicalSpecialty",
+            "award",
+            "isAcceptingNewPatients",
+            "priceRange",
+            "hasMap",
+            "makesOffer",
+            "hasOfferCatalog",
+        }
+
+        def property_names(value: object) -> set[str]:
+            if isinstance(value, dict):
+                return set(value) | set().union(*(property_names(item) for item in value.values()))
+            if isinstance(value, list):
+                return set().union(*(property_names(item) for item in value))
+            return set()
+
+        self.assertTrue(disallowed.isdisjoint(property_names(entity)))
+        serialized = json.dumps(entity, ensure_ascii=False).casefold()
+        for forbidden in ("facebook.com", "t.me", "telegram", "ніка дент", "nika dent"):
+            self.assertNotIn(forbidden, serialized)
+
+    def test_homepage_contact_links_hours_and_map_are_exact(self) -> None:
+        parsed = parse_repository_html("index.html")
+
+        def anchors_for(href: str) -> list[dict[str, object]]:
+            return [
+                anchor
+                for anchor in parsed.anchors
+                if isinstance(anchor["attributes"], dict)
+                and anchor["attributes"].get("href") == href
+            ]
+
+        phone = anchors_for("tel:+380964303719")
+        self.assertEqual(len(phone), 1)
+        self.assertEqual(normalized_text(phone[0]["text"]), "096 430 37 19")
+        self.assertEqual(phone[0]["attributes"].get("class"), "contact-value-link")
+
+        email = anchors_for("mailto:klinikanika@gmail.com")
+        self.assertEqual(len(email), 1)
+        self.assertEqual(normalized_text(email[0]["text"]), "klinikanika@gmail.com")
+        self.assertEqual(email[0]["attributes"].get("class"), "contact-value-link")
+
+        address = anchors_for(MAP_URL)
+        self.assertEqual(len(address), 1)
+        expected_address = (
+            "м. Кривий Ріг, Покровський район, зуп. Військового Тилу, "
+            "вул. Федора Караманиць, 43/3А, 50000"
+        )
+        address_text = normalized_text(address[0]["text"])
+        self.assertEqual(address_text, expected_address)
+        self.assertNotIn("Федора Карамани,", address_text)
+        self.assertNotIn("Ватутіна", address_text)
+        self.assertEqual(address[0]["attributes"].get("class"), "contact-value-link")
+        self.assertEqual(address[0]["attributes"].get("target"), "_blank")
+        self.assertEqual(address[0]["attributes"].get("rel"), "noopener")
+        self.assertEqual(
+            address[0]["attributes"].get("aria-label"),
+            "Відкрити Bella Dent Clinic у Google Maps",
+        )
+
+        visible_body = normalized_text(parsed.body_text)
+        self.assertIn(
+            "Пн – Пт: 09:00 – 18:00 Сб: 09:00 – 14:00 Нд:09:00 – 16:00",
+            visible_body,
+        )
+
+        map_iframes = [iframe for iframe in parsed.iframes if iframe.get("src") == MAP_EMBED_URL]
+        self.assertEqual(len(map_iframes), 1)
+        self.assertEqual(map_iframes[0].get("class"), "map-iframe")
+        self.assertEqual(map_iframes[0].get("title"), "Bella Dent Clinic на Google Maps")
+        self.assertEqual(map_iframes[0].get("loading"), "lazy")
+        self.assertEqual(map_iframes[0].get("allowfullscreen"), "")
+        self.assertEqual(map_iframes[0].get("referrerpolicy"), "no-referrer-when-downgrade")
+
+        facebook = anchors_for(FACEBOOK_URL)
+        self.assertEqual(len(facebook), 1)
+        self.assertEqual(facebook[0]["attributes"].get("aria-label"), "Facebook")
+        self.assertEqual(facebook[0]["attributes"].get("target"), "_blank")
+        self.assertEqual(facebook[0]["attributes"].get("rel"), "noopener")
+
+    def test_public_content_scope_boundaries_remain_locked(self) -> None:
+        index_path = REPOSITORY_ROOT / "index.html"
+        price_path = REPOSITORY_ROOT / "price.html"
+        manifest_path = REPOSITORY_ROOT / "pages-public-manifest.txt"
+        index = parse_repository_html("index.html")
+
+        self.assertEqual(index.img_alts.count("Клініка Ніка Дент"), 16)
+        for path in (index_path, price_path):
+            source = path.read_text(encoding="utf-8", errors="strict")
+            self.assertNotIn("t.me/", source.casefold())
+            self.assertNotIn("telegram.me/", source.casefold())
+
+        price_source = price_path.read_text(encoding="utf-8", errors="strict")
+        self.assertEqual(price_source.count('background-image:url("images/фото для прайса.jpg")'), 1)
+        self.assertNotIn("images/фото для прайса.jpg", self.manifest_entries)
+
+        price_raw = price_path.read_bytes()
+        self.assertIn(b"<body", price_raw)
+        price_body = b"<body" + price_raw.split(b"<body", 1)[1]
+        self.assertEqual(
+            hashlib.sha256(price_body).hexdigest(),
+            "988dba59828f14d8aba085ab62ab19fbd4507245e72713811b115e86f2c00489",
+        )
+        self.assertEqual(
+            hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
+            "0888f7c65e3e6cb1db0780f0f165c057c56dd5a9e49757d9b465a0b55df2609d",
+        )
+
+    def test_contact_value_link_css_is_narrowly_scoped(self) -> None:
+        source = (REPOSITORY_ROOT / "index.html").read_text(encoding="utf-8", errors="strict")
+        expected = """  .contact-value-link {
+    color: inherit;
+    text-decoration: none;
+    transition: color .25s ease;
+  }
+  .contact-value-link:hover,
+  .contact-value-link:focus-visible {
+    color: var(--gold);
+  }
+  .contact-value-link:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 3px;
+  }"""
+        self.assertEqual(source.count(expected), 1)
 
     def test_manifest_and_candidate_artifact_have_exact_public_inventory(self) -> None:
         expected_new_files = {"robots.txt", "sitemap.xml"}
