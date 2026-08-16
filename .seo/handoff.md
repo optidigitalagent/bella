@@ -35,7 +35,7 @@
 
 - Blocking later public entity work: owner confirmation of Bella/Nika naming and identity/NAP/contact/map conflicts.
 - Requiring professional or provenance review: doctors, qualifications, medical claims, reviews, cases, and consent.
-- Non-blocking later work: missing price background image, image performance, safe sheet-fed DOM handling, measurement, approved metadata/favicon/social assets, and priority service-page architecture.
+- Non-blocking later work: the price background source file is already tracked at `images/фото для прайса.jpg`, so do not search for a nonexistent source file; investigate its omission from the publication allowlist and asset approval, and do not add it to production without separate public-site authorization and asset approval because PR #9 changes records only and does not repair production; image performance; safe sheet-fed DOM handling; measurement; approved metadata/favicon/social assets; and priority service-page architecture.
 - Published website values remain `owner_confirmation_pending`, not verified business facts.
 
 ## Next authorized action

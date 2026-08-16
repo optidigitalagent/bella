@@ -25,7 +25,7 @@
   "lab_performance_source": null,
   "known_gaps": [
     "Published entity, NAP, contact, map, Bella/Nika, doctor, service, price, review, case, and medical values remain owner_confirmation_pending or require professional review; none are verified by this baseline",
-    "Missing source asset: images/фото для прайса.jpg",
+    "Tracked source asset images/фото для прайса.jpg is referenced by price.html but is omitted from pages-public-manifest.txt and the 56-file Pages artifact, so the public request returns 404",
     "Large/eager images remain future performance work; no Lighthouse, CrUX, ranking, traffic, or modeled score is recorded",
     "Sheet-fed doctor values reach innerHTML sinks and require a later safe-DOM hardening PR",
     "No deployed analytics or verified conversion measurement",

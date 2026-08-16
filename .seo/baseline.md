@@ -28,7 +28,7 @@ Captured: 2026-08-16T08:15:59Z (2026-08-16T11:15:59+03:00, Europe/Kyiv)
 - No P0 finding remains after deployment acceptance.
 - Earlier local routing was unreliable; retained Check-Host propagation reports independently showed public-route 200s and private-route 404s across nine responding nodes, while one node timed out. Current bounded local route checks succeeded.
 - Retained multi-region evidence showed public API health from two Ukraine nodes and six other valid nodes; this closeout created no new remote measurement.
-- Known non-blocking work remains: owner confirmation for entity/NAP and Bella/Nika conflicts; medical, doctor, review, and case provenance; the missing price background image; image performance; safe doctor-sheet DOM handling; measurement; approved metadata/assets; and priority service-page architecture.
+- Known non-blocking work remains: owner confirmation for entity/NAP and Bella/Nika conflicts; medical, doctor, review, and case provenance; the tracked Git asset `images/фото для прайса.jpg`, which `price.html` references but `pages-public-manifest.txt` and the 56-file Pages artifact omit, causing the public request to return 404 and requiring a later asset/publication PR because PR #9 records rather than repairs the issue; image performance; safe doctor-sheet DOM handling; measurement; approved metadata/assets; and priority service-page architecture.
 - Published website values remain `owner_confirmation_pending`; this baseline does not promote them to verified business facts.
 
 ## Next operational stage
