@@ -1,10 +1,10 @@
 {
   "granted_by": "user via direct execution prompt",
-  "granted_at": "2026-08-14T06:06:33Z",
+  "granted_at": "2026-08-16T08:15:59Z",
   "expires_at": null,
   "repository": "optidigitalagent/bella",
   "project_id": "bella",
-  "scope": "One-time Bella PR 0B authorization: audit, branch, add-only .seo edit, tests, one commit, normal push, and one draft pull request",
+  "scope": "Previous PR 0B bootstrap authorization is historical and inactive. One-time Bella PR 1 closeout authorization only: audit, branch, edit, tests, one commit, one normal push, and one draft pull request. Edits are restricted to .seo/authorization.yml, .seo/backlog.csv, .seo/baseline.md, .seo/change-log.md, .seo/crawl-report.csv, .seo/execution-plan.md, .seo/handoff.md, .seo/project.json, .seo/project-state.yml, .seo/qa-log.csv, .seo/redirect-map.csv, .seo/release-state.yml, .seo/risk-register.yml, and .seo/technical-baseline.json. Ready for review, merge, deploy, release, sitemap submission, indexing request, and external action are denied. No future authorization is inherited; the draft PR number is not assigned in advance.",
   "permissions": {
     "audit": true,
     "branch": true,

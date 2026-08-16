@@ -1,1 +1,8 @@
 source_url,source_status,target_url,target_status,hops,reason,internal_links_updated,sitemap_updated,owner,status
+http://belladentclinik.kr.ua/,301,https://belladentclinik.kr.ua/,200,1,HTTP apex normalizes to HTTPS apex,not_applicable,not_applicable,platform,verified_2026-08-16
+http://www.belladentclinik.kr.ua/,301,https://belladentclinik.kr.ua/,200,1,HTTP www normalizes directly to HTTPS apex,not_applicable,not_applicable,platform,verified_2026-08-16
+https://www.belladentclinik.kr.ua/,301,https://belladentclinik.kr.ua/,200,1,HTTPS www normalizes to HTTPS apex,not_applicable,not_applicable,platform,verified_2026-08-16
+https://belladentclinik.kr.ua/index.html,200,https://belladentclinik.kr.ua/,200,0,HTML canonical signal to preferred home; not a server redirect,yes,yes,engineering,verified_2026-08-16
+https://belladentclinik.kr.ua/price.html,200,https://belladentclinik.kr.ua/price.html,200,0,Self-canonical preferred price URL,yes,yes,engineering,verified_2026-08-16
+https://belladentclinik.kr.ua/price,200,https://belladentclinik.kr.ua/price.html,200,0,Platform extensionless behavior serves the price document with the price.html canonical,not_applicable,yes,platform,verified_2026-08-16
+https://belladentclinik.kr.ua/price/,404,,404,0,Trailing-slash variant is genuinely missing,not_applicable,not_applicable,platform,verified_2026-08-16

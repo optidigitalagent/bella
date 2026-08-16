@@ -1,1 +1,12 @@
 url,status,redirect_target,indexable,robots,canonical,sitemap,inlinks,h1_count,title,description,html_lang,rendered_checked,issues,evidence_type,collected_at
+https://belladentclinik.kr.ua/,200,,yes,allowed,https://belladentclinik.kr.ua/,yes,,1,,,uk,yes,,"live_local_head; exact_deployed_artifact; retained_check-host:478e1661k810",2026-08-16T08:06:57Z
+https://belladentclinik.kr.ua/index.html,200,,yes,allowed,https://belladentclinik.kr.ua/,no,,1,,,uk,yes,"200 with canonical to root; not redirected","live_local_head; exact_deployed_artifact; retained_check-host:478e1687k58f",2026-08-16T08:06:57Z
+https://belladentclinik.kr.ua/price.html,200,,yes,allowed,https://belladentclinik.kr.ua/price.html,yes,,1,,,uk,yes,,"live_local_head; exact_deployed_artifact; retained_check-host:478e16b9k218",2026-08-16T08:06:58Z
+https://belladentclinik.kr.ua/robots.txt,200,,not_applicable,policy_file,,no,,,,,,no,,"live_local_head; exact_deployed_artifact; retained_check-host:478e16cak4ce",2026-08-16T08:06:58Z
+https://belladentclinik.kr.ua/sitemap.xml,200,,not_applicable,sitemap_file,,yes,,,,,,no,"contains exactly home and price canonicals","live_local_head; exact_deployed_artifact; retained_check-host:478e16d4kec2",2026-08-16T08:06:59Z
+https://belladentclinik.kr.ua/.seo/project.json,404,,no,not_applicable,,no,,,,,,no,private operational path excluded,"live_local_head; exact artifact absence; retained_check-host:478e16e1kfb",2026-08-16T08:07:00Z
+https://belladentclinik.kr.ua/server/package.json,404,,no,not_applicable,,no,,,,,,no,backend path excluded,"live_local_head; exact artifact absence; retained_check-host:478e16f3k23c",2026-08-16T08:07:00Z
+https://belladentclinik.kr.ua/.github/workflows/pages.yml,404,,no,not_applicable,,no,,,,,,no,workflow path excluded,"live_local_head; exact artifact absence",2026-08-16T08:07:01Z
+https://belladentclinik.kr.ua/pages-public-manifest.txt,404,,no,not_applicable,,no,,,,,,no,internal manifest excluded,"live_local_head; exact artifact absence",2026-08-16T08:07:01Z
+https://belladentclinik.kr.ua/bella-dent-clinic-fixed.html,404,,no,not_applicable,,no,,,,,,no,legacy HTML excluded,"live_local_head; exact artifact absence",2026-08-16T08:07:01Z
+https://belladentclinik.kr.ua/__bella-closeout-missing-20260816__,404,,no,not_applicable,,no,,,,,,no,random missing route,"live_local_head",2026-08-16T08:07:02Z
