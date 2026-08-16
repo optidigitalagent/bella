@@ -31,3 +31,22 @@
 - Validation: 53-file parse/schema/safety checks and unchanged 56-file publishing-isolation checks are required before the single commit.
 - Release reference: Draft PR number intentionally unassigned until GitHub creates it; this branch is not merged or deployed.
 - Decision: stop after opening and verifying one Draft PR. Ready, merge, deploy, sitemap submission, indexing, and external action remain separately authorized scopes.
+
+## 2026-08-16 — PR #9 operational closeout merged
+
+- Affected surface: the 14 reviewed `.seo/` closeout records only.
+- Change: PR [#9](https://github.com/optidigitalagent/bella/pull/9), head `e3390e5e4bfb8894f2a42c784b3db6b972e5b03b`, merged at 2026-08-16T12:41:41Z as `db7bb03a06e4083a26394cb355b4c3512c689ec3`.
+- Validation/decision: `main` is ahead of deployed SHA `1195107fabf3525d48cf11515bdc0ffb8a0f183d` only through operational `.seo/` records; no public deployment is required.
+
+## 2026-08-16 — Direct client entity confirmation received
+
+- Confirmed: current Bella Dent Clinic brand, core NAP, hours, category, Maps location, current social-link state, logo permission, and primary conversion.
+- Normalized: the current street is `Федора Караманиць`; `Ватутіна` remains a legacy alias under municipal decision No. 1515.
+- Boundary: this confirmation is not qualified medical review, review/case provenance, patient consent, treatment-outcome evidence, or formal trademark/patent registration evidence.
+
+## 2026-08-16 — Entity facts baseline branch work
+
+- Affected surface: exactly the 14 authorized `.seo/` records on `chore/bella-seo-entity-facts`.
+- Change: record a public-safe facts baseline and the current/legacy address distinction before any public entity/home/local work.
+- Release reference: Draft PR number intentionally unassigned until GitHub creates it; this branch is not merged or deployed.
+- Decision: stop after one Draft PR. Ready, merge, public-site/Schema implementation, deploy, indexing, and external-profile actions require separate authorization.
