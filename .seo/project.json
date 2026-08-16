@@ -6,6 +6,6 @@
   "primary_language": "uk",
   "site_type": "local-business",
   "initialized_at": "2026-08-14T06:06:33Z",
-  "status": "technical_foundation_deployed__post_deploy_closeout_in_progress__entity_facts_pending_confirmation",
+  "status": "operational_closeout_merged__entity_facts_baseline_in_progress__public_entity_implementation_not_authorized",
   "secrets_policy": "Do not store credentials, tokens, private exports, personal data, or medical data in .seo"
 }

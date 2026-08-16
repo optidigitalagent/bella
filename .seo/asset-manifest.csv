@@ -1,1 +1,3 @@
 asset_id,path_or_url,owner,license_or_permission,contains_identifiable_person,subject_consent,clinical_provenance,clinical_claim_ids,allowed_surfaces,status
+ASSET-001,images/bella-dent-mark.png.png,Bella Dent Clinic / client-confirmed ownership and permission; formal trademark/patent registration not independently verified,approved,false,not_applicable,not_applicable,,website;favicon;open_graph;social_preview,approved
+ASSET-002,images/фото для прайса.jpg,unknown/not recorded,pending,true,pending,pending,,,pending

@@ -1,54 +1,45 @@
 # SEO handoff
 
-- Generated at: 2026-08-16T08:15:59Z (2026-08-16T11:15:59+03:00, Europe/Kyiv)
-- Repository: `optidigitalagent/bella`
-- Default branch: `main`
-- Local branch/base: `chore/bella-seo-pr1-closeout` / `1195107fabf3525d48cf11515bdc0ffb8a0f183d`
-- Remote main SHA: `1195107fabf3525d48cf11515bdc0ffb8a0f183d`
-- Deployed SHA: `1195107fabf3525d48cf11515bdc0ffb8a0f183d`
-- Production URL: `https://belladentclinik.kr.ua`
-- API origin: `https://bella-dent-api-production.up.railway.app`
-- Open pull requests at branch creation: 0; the closeout Draft PR number is intentionally not assigned in advance.
-- Completed pull requests: #6 publishing isolation, #7 public-safe `.seo/` bootstrap, #8 technical foundation.
-- Deployment evidence: workflow run `31891801908`, build job `95029074327`, deploy job `95029100651`, Pages deployment `5921688840`, artifact `9248733312`.
-- Public artifact: 56 files; exact Git aggregate `91db82f83e6ec8a550240f0b05f05a5650eeb157771d20fbabd8135ae5fca95a`.
-- Requested mode: operational closeout implementation ending at Draft PR.
-- Authorization: audit, branch, edit, tests, one commit, one normal push, and one Draft PR only.
-- Production verified: bounded local checks completed 2026-08-16T08:07:05Z; exact deployment/artifact and retained propagation evidence also verified.
+- Generated at: 2026-08-16T13:50:02Z (2026-08-16T16:50:02+03:00, Europe/Kyiv)
+- Repository: `optidigitalagent/bella`; default branch: `main`.
+- Current facts branch/base: `chore/bella-seo-entity-facts` / `db7bb03a06e4083a26394cb355b4c3512c689ec3`.
+- Remote main SHA: `db7bb03a06e4083a26394cb355b4c3512c689ec3`.
+- Deployed SHA: `1195107fabf3525d48cf11515bdc0ffb8a0f183d`; Pages deployment `5921688840` remains the current production deployment.
+- PR #9 merged the operational closeout as `db7bb03a06e4083a26394cb355b4c3512c689ec3`.
+- Open pull requests at branch creation: 0; the facts-baseline Draft PR number is intentionally not assigned in advance.
+- Requested mode and authorization: entity-facts baseline ending at one Draft PR; audit, branch, exact 14-file edit, tests, one commit, and one normal push only.
+- Main is ahead of the deployed SHA only through `.seo/` operational records. No deployment is required for this facts baseline or its later merge.
 
-## Completed
+## Confirmed core facts
 
-- The public artifact is isolated from `.seo/`, backend, workflow, docs, scripts, tests, manifest, package, and legacy HTML paths.
-- `/`, `/index.html`, `/price.html`, `/robots.txt`, and `/sitemap.xml` are 200. Home and price canonicals are correct; `/index.html` is not redirected.
-- HTTP/`www` normalization is active. `/price` resolves as 200 with the price canonical; `/price/` is 404.
-- PR 1 changed no API, CORS, Railway, form, Clinic Life, or Sheets integration code.
-- No P0 finding remains and no newer Pages deployment exists.
+- Current official brand: Bella Dent Clinic; category: стоматологічна клініка; market: Kryvyi Rih; language: `uk`.
+- Canonical address: Україна, Дніпропетровська область, 50000, м. Кривий Ріг, Покровський район, вул. Федора Караманиць, 43/3А.
+- Legacy alias: Україна, Дніпропетровська область, 50000, м. Кривий Ріг, вул. Ватутіна, 43/3А.
+- Municipal decision No. 1515 dated 2022-10-28 verifies `Ватутіна` → `Федора Караманиць`; the current website spelling `Федора Карамани` is not exact.
+- Owner-provided Maps URL: https://maps.app.goo.gl/4f5ZoSzFxpXF6iEY8; coordinates: `48.01832, 33.4757793`.
+- Phone: `+380964303719` (`096 430 37 19`); email: `klinikanika@gmail.com`.
+- Hours: Пн–Пт 09:00–18:00; Сб 09:00–14:00; Нд 09:00–16:00.
+- Canonical site: https://belladentclinik.kr.ua/; Instagram: https://www.instagram.com/bella.dent.clinic.
+- The current Facebook share link is approved only as the current website link, not as canonical-profile or Schema `sameAs` evidence. No Telegram URL is verified.
+- Logo `images/bella-dent-mark.png.png` is client-approved for website, favicon, Open Graph, and social preview use; formal registration is not verified.
+- Primary conversion: consultation form and phone contact.
 
-## Validation
+## Remaining boundaries
 
-- All 53 `.seo/` paths parse as 2 JSON, 13 YAML, 29 CSV, and 9 Markdown files.
-- PR 1 isolation tests passed with only the three established Windows capability skips.
-- The downloaded 56-file artifact is byte-identical to the `origin/main` Git blobs.
-- Retained Check-Host reports distinguish remote propagation evidence from current local checks; no new Check-Host or Globalping measurement was created.
+- The Nika Dent / Ніка Дент relationship is unresolved; do not assert a former, legal, or historical trading name and do not perform blind replacement.
+- Canonical Facebook profile, Telegram URL, formal trademark/patent evidence, and all external-account ownership/access remain unresolved.
+- Doctors, roles, qualifications, experience, services, prices, reviews, cases, consent, outcomes, clinical assertions, and published metrics have no new qualified-review/provenance approval from this facts baseline.
+- Exact new meta descriptions remain unapproved.
+- `images/фото для прайса.jpg` remains permission-pending, excluded from approved surfaces, and unrelated to this PR; no price-asset repair is authorized.
 
-## Remaining and blocked
+## Scope and validation boundary
 
-- Blocking later public entity work: owner confirmation of Bella/Nika naming and identity/NAP/contact/map conflicts.
-- Requiring professional or provenance review: doctors, qualifications, medical claims, reviews, cases, and consent.
-- Non-blocking later work: the price background source file is already tracked at `images/фото для прайса.jpg`, so do not search for a nonexistent source file; investigate its omission from the publication allowlist and asset approval, and do not add it to production without separate public-site authorization and asset approval because PR #9 changes records only and does not repair production; image performance; safe sheet-fed DOM handling; measurement; approved metadata/favicon/social assets; and priority service-page architecture.
-- Published website values remain `owner_confirmation_pending`, not verified business facts.
+- This branch changes no public site file, metadata, Schema, social profile, external account, backend, workflow, sitemap, or production byte.
+- The 53-file parse/schema/public-safety gate and unchanged 56-file publishing-isolation gate must pass before the single commit.
+- The Draft PR must remain Draft. Deploy must remain skipped.
 
-## Next authorized action
+## Next separately authorized action
 
-After this Draft PR is opened, independently verify its exact head and checks, then obtain separate authorization to mark it Ready for review. Merge is a later separate authorization. Entity facts require client confirmation and a later separate PR. Deploy, sitemap submission, indexing, and external actions are not implied.
+After the Draft is opened, independently verify its exact head, facts, diff, and checks, then obtain separate authorization to mark it Ready. Merge remains separate. A public Entity/Home/Local PR remains later; public address/social/metadata/Schema changes and external-profile actions remain separately authorized. No deployment is needed for a `.seo/`-only facts merge.
 
-## State files updated
-
-- [x] project state
-- [x] backlog
-- [ ] page map (not authorized and unchanged)
-- [x] change log
-- [ ] measurement plan (not authorized and unchanged)
-- [x] release state for merged/deployed PR #8
-
-An outdated handoff must never override live repository or deployment evidence.
+An outdated handoff must never override live repository, source, municipal, Maps, or deployment evidence.

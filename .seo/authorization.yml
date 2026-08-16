@@ -1,10 +1,10 @@
 {
   "granted_by": "user via direct execution prompt",
-  "granted_at": "2026-08-16T08:15:59Z",
+  "granted_at": "2026-08-16T13:50:02Z",
   "expires_at": null,
   "repository": "optidigitalagent/bella",
   "project_id": "bella",
-  "scope": "Previous PR 0B bootstrap authorization is historical and inactive. One-time Bella PR 1 closeout authorization only: audit, branch, edit, tests, one commit, one normal push, and one draft pull request. Edits are restricted to .seo/authorization.yml, .seo/backlog.csv, .seo/baseline.md, .seo/change-log.md, .seo/crawl-report.csv, .seo/execution-plan.md, .seo/handoff.md, .seo/project.json, .seo/project-state.yml, .seo/qa-log.csv, .seo/redirect-map.csv, .seo/release-state.yml, .seo/risk-register.yml, and .seo/technical-baseline.json. Ready for review, merge, deploy, release, sitemap submission, indexing request, and external action are denied. No future authorization is inherited; the draft PR number is not assigned in advance.",
+  "scope": "PR #9 operational-closeout authorization is historical and inactive. This is a one-time Bella-only entity-facts-baseline authorization for audit, branch creation, edits to exactly .seo/authorization.yml, .seo/asset-manifest.csv, .seo/backlog.csv, .seo/brief.md, .seo/change-log.md, .seo/data-source-register.yml, .seo/entity-consistency.csv, .seo/facts-register.csv, .seo/handoff.md, .seo/local-entity.yml, .seo/project-state.yml, .seo/project.json, .seo/qa-log.csv, and .seo/risk-register.yml, required tests, exactly one commit, one normal push, and one Draft PR. Ready for review, merge, deploy, release, sitemap submission, indexing request, external action, public-site implementation, Schema implementation, publication, and external-account changes are denied. No future authorization is inherited and no PR number is assigned before creation.",
   "permissions": {
     "audit": true,
     "branch": true,
