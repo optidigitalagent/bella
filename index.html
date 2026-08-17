@@ -5,6 +5,73 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bella Dent Clinic — Центр сучасної стоматології</title>
 <link rel="canonical" href="https://belladentclinik.kr.ua/">
+<link rel="icon" type="image/png" href="https://belladentclinik.kr.ua/images/bella-dent-mark.png.png">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="uk_UA">
+<meta property="og:site_name" content="Bella Dent Clinic">
+<meta property="og:title" content="Bella Dent Clinic — Центр сучасної стоматології">
+<meta property="og:url" content="https://belladentclinik.kr.ua/">
+<meta property="og:image" content="https://belladentclinik.kr.ua/images/bella-dent-mark.png.png">
+<meta property="og:image:alt" content="Bella Dent Clinic">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Bella Dent Clinic — Центр сучасної стоматології">
+<meta name="twitter:image" content="https://belladentclinik.kr.ua/images/bella-dent-mark.png.png">
+<meta name="twitter:image:alt" content="Bella Dent Clinic">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Dentist",
+  "@id": "https://belladentclinik.kr.ua/#dentist",
+  "name": "Bella Dent Clinic",
+  "url": "https://belladentclinik.kr.ua/",
+  "logo": "https://belladentclinik.kr.ua/images/bella-dent-mark.png.png",
+  "image": "https://belladentclinik.kr.ua/images/bella-dent-mark.png.png",
+  "telephone": "+380964303719",
+  "email": "klinikanika@gmail.com",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "вул. Федора Караманиць, 43/3А",
+    "addressLocality": "Кривий Ріг",
+    "addressRegion": "Дніпропетровська область",
+    "postalCode": "50000",
+    "addressCountry": "UA"
+  },
+  "geo": {
+    "@type": "GeoCoordinates",
+    "latitude": 48.01832,
+    "longitude": 33.4757793
+  },
+  "openingHoursSpecification": [
+    {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday"
+      ],
+      "opens": "09:00",
+      "closes": "18:00"
+    },
+    {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": "Saturday",
+      "opens": "09:00",
+      "closes": "14:00"
+    },
+    {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": "Sunday",
+      "opens": "09:00",
+      "closes": "16:00"
+    }
+  ],
+  "sameAs": [
+    "https://www.instagram.com/bella.dent.clinic"
+  ]
+}
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,600&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   *{margin:0;padding:0;box-sizing:border-box;}
@@ -193,6 +260,19 @@
   .contact-icon-wrap svg{width:22px;height:22px;stroke:var(--gold);fill:none;stroke-width:1.5;}
   .contact-label{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray-brown);font-weight:400;margin-bottom:2px;}
   .contact-value{font-size:15px;color:var(--brown);font-weight:400;}
+  .contact-value-link {
+    color: inherit;
+    text-decoration: none;
+    transition: color .25s ease;
+  }
+  .contact-value-link:hover,
+  .contact-value-link:focus-visible {
+    color: var(--gold);
+  }
+  .contact-value-link:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 3px;
+  }
   .contact-value-small{font-size:13px;color:var(--brown);font-weight:300;line-height:1.6;}
   .contacts-social{display:flex;gap:12px;align-items:center;}
   .contact-social-icon{width:38px;height:38px;border:1px solid rgba(196,154,85,0.4);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.3s;}
@@ -712,7 +792,9 @@
           </div>
           <div>
             <div class="contact-label">Телефон</div>
-            <div class="contact-value">096 430 37 19</div>
+            <div class="contact-value">
+              <a class="contact-value-link" href="tel:+380964303719">096 430 37 19</a>
+            </div>
           </div>
         </div>
         <div class="contact-row">
@@ -721,7 +803,15 @@
           </div>
           <div>
             <div class="contact-label">Адреса</div>
-            <div class="contact-value">м. Кривий Ріг, Покровський район, зуп. Військового Тилу, вул. Федора Карамани, 43/3А</div>
+            <div class="contact-value">
+              <a
+                class="contact-value-link"
+                href="https://maps.app.goo.gl/4f5ZoSzFxpXF6iEY8"
+                target="_blank"
+                rel="noopener"
+                aria-label="Відкрити Bella Dent Clinic у Google Maps"
+              >м. Кривий Ріг, Покровський район, зуп. Військового Тилу, вул. Федора Караманиць, 43/3А, 50000</a>
+            </div>
             <div class="contact-value-note">Окрема одноповерхова будівля</div>
           </div>
         </div>
@@ -731,7 +821,9 @@
           </div>
           <div>
             <div class="contact-label">E-mail</div>
-            <div class="contact-value">klinikanika@gmail.com</div>
+            <div class="contact-value">
+              <a class="contact-value-link" href="mailto:klinikanika@gmail.com">klinikanika@gmail.com</a>
+            </div>
           </div>
         </div>
         <div class="contact-row">
@@ -751,7 +843,7 @@
             <div class="contact-label">Ми в соціальних мережах</div>
             <div class="contacts-social" style="margin-top:8px">
               <a href="https://www.instagram.com/bella.dent.clinic" target="_blank" rel="noopener" aria-label="Instagram" class="contact-social-icon"><svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="#C49A55" stroke="none"/></svg></a>
-              <a href="https://www.facebook.com/share/1JF7VKAp6X/?mibextid=wwXIfr" target="_blank" rel="noopener" class="contact-social-icon"><svg viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
+              <a href="https://www.facebook.com/share/1JF7VKAp6X/?mibextid=wwXIfr" target="_blank" rel="noopener" aria-label="Facebook" class="contact-social-icon"><svg viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
               <div class="contact-social-icon"><svg viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 20-7z"/></svg></div>
             </div>
           </div>
@@ -791,6 +883,8 @@
 <div id="map">
   <div class="map-container">
   <iframe
+  class="map-iframe"
+  title="Bella Dent Clinic на Google Maps"
   src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2643.5!2d33.4757767!3d48.0183088!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x40dae1c011d7f895:0x5bf876226c7311c0!2z0YPQuy4g0JLQsNGC0YPRgtC40L3QsCwgNDMvM9CQ!5e0!3m2!1sru!2sua!4v1234567890"
   width="600"
   height="450"
