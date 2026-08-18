@@ -39,9 +39,48 @@ SITEMAP_NAMESPACE = "http://www.sitemaps.org/schemas/sitemap/0.9"
 EXPECTED_SITEMAP_LOCS = [
     "https://belladentclinik.kr.ua/",
     "https://belladentclinik.kr.ua/price.html",
+    "https://belladentclinik.kr.ua/implantatsiia-zubiv.html",
 ]
 SITE_ROOT = "https://belladentclinik.kr.ua/"
 LOGO_URL = f"{SITE_ROOT}images/bella-dent-mark.png.png"
+IMPLANTATION_PAGE = "implantatsiia-zubiv.html"
+IMPLANTATION_TITLE = "Імплантація зубів у Кривому Розі — Bella Dent Clinic"
+IMPLANTATION_CANONICAL = f"{SITE_ROOT}{IMPLANTATION_PAGE}"
+IMPLANTATION_DESCRIPTION = (
+    "Імплантація зубів у Bella Dent Clinic у Кривому Розі: опублікований прайс, "
+    "лікар, контакти та запис на консультацію."
+)
+EXPECTED_IMPLANTATION_PRICES = [
+    ("Імпланти: Alfa Bio Ізраїль", "400 у.о."),
+    ("Імпланти: Neobiotech / Identall", "400 у.о."),
+    ("Імпланти: MEGAGEN (Anyridge) Корея", "450 у.о."),
+    ("Імплантат MEGAGEN AnyOne (Корея)", "400 у.о."),
+    ("Виготовлення шаблону на імплантацію", "55–100 у.о."),
+    ("Встановлення формувача ясен", "900 грн"),
+    ("Закритий синусліфтинг (без урахування кісткового матеріалу) гребневий", "7000 грн"),
+    ("Закритий синусліфтинг (без урахування кісткового матеріалу) з остеотомами", "12000 грн"),
+    ("Відкритий синусліфтинг (без урахування кісткового матеріалу)", "45000 грн"),
+    ("Розщеплення гребеню альвеолярного відростку", "5000 грн"),
+    ("Виготовлення індивідуального абатменту", "4000 грн"),
+    ("Виготовлення цирконієвого індивідуального абатменту", "4500 грн"),
+    ("Металокерамічна коронка на імплант", "5500 грн"),
+    ("Коронка з діоксиду цирконію на імплантат", "8000 грн"),
+    ("Виготовлення цільновідлитої коронки на імплантат", "4000 грн"),
+    ("Фіксація коронки склоіономерним цементом на імплантат", "500 грн"),
+    ("Мультюніт", "4000 грн"),
+    ("Горизонтальна аугментація кістковим блоком по Кюрі", "8000 грн"),
+    ("Горизонтальна аугментація", "10000 грн"),
+    ("Встановлення кісткового гвинта", "600 грн"),
+    ("Встановлення кісткового блоку 15202", "6000 грн"),
+    ("Встановлення кісткового блоку 15302", "9000 грн"),
+    ("Встановлення кісткового блоку 7.5202", "4000 грн"),
+    ("Встановлення кісткового блоку 7.5302", "5000 грн"),
+    ("Встановлення мембрани (ксеноімплантат) 20*30", "2000 грн"),
+    ("Встановлення мембрани (ксеноімплантат) 30*40", "3000 грн"),
+    ("Мембрана APRF", "2000 грн"),
+    ("Редукція кісткової тканини", "2000 грн"),
+    ("Імплант Сервіс", "3000 грн"),
+]
 INSTAGRAM_URL = "https://www.instagram.com/bella.dent.clinic"
 FACEBOOK_URL = "https://www.facebook.com/share/1JF7VKAp6X/?mibextid=wwXIfr"
 MAP_URL = "https://maps.app.goo.gl/4f5ZoSzFxpXF6iEY8"
@@ -67,6 +106,7 @@ class TechnicalSeoHTMLParser(HTMLParser):
         self.canonicals: list[str] = []
         self.hrefs: list[str] = []
         self.ids: set[str] = set()
+        self.id_values: list[str] = []
         self.links: list[dict[str, str | None]] = []
         self.metas: list[dict[str, str | None]] = []
         self.anchors: list[dict[str, object]] = []
@@ -74,10 +114,17 @@ class TechnicalSeoHTMLParser(HTMLParser):
         self.img_alts: list[str] = []
         self.json_ld_texts: list[str] = []
         self.titles: list[str] = []
+        self.h1_texts: list[str] = []
+        self.h2_texts: list[str] = []
+        self.table_rows: list[list[str]] = []
+        self.table_captions: list[str] = []
+        self.th_scopes: list[str | None] = []
         self.body_text: list[str] = []
         self._anchor_stack: list[dict[str, object]] = []
         self._json_ld_parts: list[str] | None = None
         self._title_parts: list[str] | None = None
+        self._text_captures: list[tuple[str, list[str]]] = []
+        self._current_row: list[str] | None = None
         self._in_body = False
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
@@ -85,6 +132,7 @@ class TechnicalSeoHTMLParser(HTMLParser):
         element_id = attributes.get("id")
         if element_id:
             self.ids.add(element_id)
+            self.id_values.append(element_id)
         if tag == "link":
             self.links.append(attributes)
             if "canonical" in (attributes.get("rel") or "").casefold().split():
@@ -105,6 +153,12 @@ class TechnicalSeoHTMLParser(HTMLParser):
             self._json_ld_parts = []
         elif tag == "title":
             self._title_parts = []
+        elif tag in {"h1", "h2", "caption", "th", "td"}:
+            self._text_captures.append((tag, []))
+            if tag == "th":
+                self.th_scopes.append(attributes.get("scope"))
+        elif tag == "tr":
+            self._current_row = []
         elif tag == "body":
             self._in_body = True
 
@@ -117,6 +171,22 @@ class TechnicalSeoHTMLParser(HTMLParser):
         elif tag == "title" and self._title_parts is not None:
             self.titles.append(normalized_text(self._title_parts))
             self._title_parts = None
+        elif tag in {"h1", "h2", "caption", "th", "td"} and self._text_captures:
+            capture_tag, parts = self._text_captures.pop()
+            if capture_tag != tag:
+                raise AssertionError(f"unexpected HTML capture close: {capture_tag} / {tag}")
+            text = normalized_text(parts)
+            if tag == "h1":
+                self.h1_texts.append(text)
+            elif tag == "h2":
+                self.h2_texts.append(text)
+            elif tag == "caption":
+                self.table_captions.append(text)
+            elif self._current_row is not None:
+                self._current_row.append(text)
+        elif tag == "tr" and self._current_row is not None:
+            self.table_rows.append(self._current_row)
+            self._current_row = None
         elif tag == "body":
             self._in_body = False
 
@@ -129,6 +199,8 @@ class TechnicalSeoHTMLParser(HTMLParser):
             self._json_ld_parts.append(data)
         if self._title_parts is not None:
             self._title_parts.append(data)
+        for _, parts in self._text_captures:
+            parts.append(data)
         if self._in_body:
             self.body_text.append(data)
 
@@ -555,11 +627,215 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
                     )
                 )
 
+    def test_implantation_page_head_contract_is_exact(self) -> None:
+        source = (REPOSITORY_ROOT / IMPLANTATION_PAGE).read_text(encoding="utf-8", errors="strict")
+        parsed = parse_repository_html(IMPLANTATION_PAGE)
+        self.assertTrue(source.startswith('<!DOCTYPE html>\n<html lang="uk">\n'))
+        self.assertEqual(parsed.titles, [IMPLANTATION_TITLE])
+        self.assertEqual(parsed.canonicals, [IMPLANTATION_CANONICAL])
+        self.assertEqual(parsed.json_ld_texts, [])
+
+        favicons = [
+            link
+            for link in parsed.links
+            if "icon" in (link.get("rel") or "").casefold().split()
+        ]
+        self.assertEqual(favicons, [{"rel": "icon", "type": "image/png", "href": LOGO_URL}])
+
+        expected_properties = {
+            "og:type": "website",
+            "og:locale": "uk_UA",
+            "og:site_name": "Bella Dent Clinic",
+            "og:title": IMPLANTATION_TITLE,
+            "og:description": IMPLANTATION_DESCRIPTION,
+            "og:url": IMPLANTATION_CANONICAL,
+            "og:image": LOGO_URL,
+            "og:image:alt": "Bella Dent Clinic",
+        }
+        expected_names = {
+            "description": IMPLANTATION_DESCRIPTION,
+            "twitter:card": "summary",
+            "twitter:title": IMPLANTATION_TITLE,
+            "twitter:description": IMPLANTATION_DESCRIPTION,
+            "twitter:image": LOGO_URL,
+            "twitter:image:alt": "Bella Dent Clinic",
+        }
+        for attribute, expected in (("property", expected_properties), ("name", expected_names)):
+            for key, value in expected.items():
+                matches = [
+                    meta.get("content")
+                    for meta in parsed.metas
+                    if meta.get(attribute) == key
+                ]
+                self.assertEqual(matches, [value], key)
+
+        robots_values = [
+            meta.get("content", "")
+            for meta in parsed.metas
+            if (meta.get("name") or "").casefold() in {"robots", "googlebot"}
+        ]
+        self.assertFalse(any("noindex" in value.casefold() or "nofollow" in value.casefold() for value in robots_values))
+
+    def test_implantation_page_visible_answer_contract_is_exact(self) -> None:
+        parsed = parse_repository_html(IMPLANTATION_PAGE)
+        visible = normalized_text(parsed.body_text)
+        self.assertEqual(parsed.h1_texts, ["Імплантація зубів у Кривому Розі"])
+        self.assertEqual(
+            parsed.h2_texts,
+            [
+                "Де надається послуга?",
+                "Хто вказаний у поточному списку лікарів?",
+                "Які ціни опубліковані?",
+                "Як записатися на консультацію?",
+                "Контакти Bella Dent Clinic",
+            ],
+        )
+        required_copy = [
+            "У Bella Dent Clinic у Кривому Розі опубліковано напрям «Імплантологія». На цій сторінці зібрані позиції з публічного прайсу, контактні дані та способи запису на консультацію.",
+            "Інформацію та ціни звірено з публічними джерелами Bella Dent Clinic станом на 18 серпня 2026 року.",
+            "Перед записом уточніть поточну вартість і доступність послуги у клініці.",
+            "Bella Dent Clinic знаходиться у Кривому Розі за адресою: вул. Федора Караманиць, 43/3А, Покровський район, 50000.",
+            "У поточному списку лікарів Bella Dent Clinic опубліковано: Олійник Ігор Євгенійович — Головний лікар клініки, хірург-стоматолог, імплантолог, ортопед.",
+            "Нижче наведено 29 позицій розділу «Імплантологія» з публічного прайсу Bella Dent Clinic, звірених 18 серпня 2026 року.",
+            "Поточний прайс може оновлюватися. Перед записом уточніть актуальну вартість у клініці.",
+            "Скористайтеся формою консультації на головній сторінці або зателефонуйте за номером 096 430 37 19.",
+            "Україна, Дніпропетровська область, 50000, м. Кривий Ріг, Покровський район, вул. Федора Караманиць, 43/3А",
+            "Пн–Пт 09:00–18:00 Сб 09:00–14:00 Нд 09:00–16:00",
+            "Сторінка містить інформацію з публічного прайсу та контактів Bella Dent Clinic. Для уточнення послуги, її доступності та поточної вартості зверніться до клініки.",
+        ]
+        for expected in required_copy:
+            self.assertIn(expected, visible)
+        self.assertNotIn("Ватутіна", visible)
+        self.assertEqual(len(parsed.id_values), len(set(parsed.id_values)))
+
+        def anchors_for(href: str) -> list[dict[str, object]]:
+            return [
+                anchor
+                for anchor in parsed.anchors
+                if isinstance(anchor["attributes"], dict)
+                and anchor["attributes"].get("href") == href
+            ]
+
+        self.assertTrue(anchors_for("/#contacts"))
+        self.assertTrue(anchors_for("tel:+380964303719"))
+        self.assertTrue(anchors_for("mailto:klinikanika@gmail.com"))
+        self.assertTrue(anchors_for("/price.html#implantolohiia"))
+        maps = anchors_for(MAP_URL)
+        self.assertGreaterEqual(len(maps), 2)
+        for anchor in maps:
+            self.assertEqual(anchor["attributes"].get("target"), "_blank")
+            self.assertEqual(anchor["attributes"].get("rel"), "noopener")
+
+    def test_implantation_price_table_and_fallback_are_exact(self) -> None:
+        parsed = parse_repository_html(IMPLANTATION_PAGE)
+        self.assertEqual(parsed.table_captions, ["Опубліковані позиції розділу «Імплантологія»"])
+        self.assertEqual(parsed.th_scopes, ["col", "col", "col"])
+        self.assertEqual(parsed.table_rows[0], ["№", "Назва", "Ціна"])
+        expected_rows = [
+            [str(index), name, price]
+            for index, (name, price) in enumerate(EXPECTED_IMPLANTATION_PRICES, 1)
+        ]
+        self.assertEqual(parsed.table_rows[1:], expected_rows)
+        self.assertEqual(len(parsed.table_rows) - 1, 29)
+
+        price_source = (REPOSITORY_ROOT / "prices.js").read_text(encoding="utf-8", errors="strict")
+        start = price_source.index("title: 'Імплантологія'")
+        end = price_source.index("\n  }\n];", start)
+        implantation_block = price_source[start:end]
+        fallback_rows = re.findall(
+            r"\{ name: '([^']+)', price: '([^']+)' \}",
+            implantation_block,
+        )
+        self.assertEqual(fallback_rows, EXPECTED_IMPLANTATION_PRICES)
+        for obsolete in (
+            "Імпланти: Neobiotech, Identall",
+            "Встановлення кісткового блоку 7,5202",
+            "Встановлення кісткового блоку 7,5302",
+        ):
+            self.assertNotIn(obsolete, price_source)
+
+    def test_implantation_internal_links_and_fragments_are_resolvable(self) -> None:
+        home_source = (REPOSITORY_ROOT / "index.html").read_text(encoding="utf-8", errors="strict")
+        self.assertEqual(
+            home_source.count(
+                "a.href = cat.slug === 'implantolohiia' ? 'implantatsiia-zubiv.html' : 'price.html#' + cat.slug;"
+            ),
+            1,
+        )
+        self.assertEqual(
+            home_source.count(
+                "var cardCta = cat.slug === 'implantolohiia' ? 'Детальніше про імплантацію' : 'Відкрити прайс';"
+            ),
+            1,
+        )
+
+        price = parse_repository_html("price.html")
+        price_links = [
+            anchor
+            for anchor in price.anchors
+            if isinstance(anchor["attributes"], dict)
+            and anchor["attributes"].get("href") == "/implantatsiia-zubiv.html"
+        ]
+        self.assertEqual(len(price_links), 1)
+        self.assertEqual(normalized_text(price_links[0]["text"]), "Імплантація зубів")
+
+        pages = {
+            "/": parse_repository_html("index.html"),
+            "/price.html": price,
+            "/implantatsiia-zubiv.html": parse_repository_html(IMPLANTATION_PAGE),
+        }
+        implantation = pages["/implantatsiia-zubiv.html"]
+        for href in implantation.hrefs:
+            url = urlsplit(href)
+            if url.scheme or url.netloc or href.startswith(("tel:", "mailto:")):
+                continue
+            target_path = url.path
+            if not target_path:
+                target_path = "/implantatsiia-zubiv.html"
+            elif not target_path.startswith("/"):
+                target_path = "/" + target_path
+            self.assertIn(target_path, pages, href)
+            if not url.fragment:
+                continue
+            if target_path == "/price.html" and url.fragment == "implantolohiia":
+                self.assertIn("slug: 'implantolohiia'", (REPOSITORY_ROOT / "prices.js").read_text(encoding="utf-8"))
+            else:
+                self.assertIn(url.fragment, pages[target_path].ids, href)
+
+    def test_implantation_page_restricted_content_and_crawler_guards(self) -> None:
+        source = (REPOSITORY_ROOT / IMPLANTATION_PAGE).read_text(encoding="utf-8", errors="strict")
+        folded = source.casefold()
+        visible_folded = normalized_text(parse_repository_html(IMPLANTATION_PAGE).body_text).casefold()
+        for forbidden in (
+            "гарантія",
+            "гарантований",
+            "100%",
+            "безболіс",
+            "назавжди",
+            "підходить усім",
+            "протипоказ",
+            "ризик",
+            "відновлен",
+            "успішність",
+            "років досвіду",
+            "сертифікат",
+            "ліцензован",
+        ):
+            self.assertNotIn(forbidden, visible_folded)
+        for bot_only_marker in ("bot-only", "ai-only", "hidden-ai", "oai-searchbot", "gptbot"):
+            self.assertNotIn(bot_only_marker, folded)
+        self.assertNotRegex(folded, r"<meta[^>]+(?:noindex|nofollow)")
+        robots = (REPOSITORY_ROOT / "robots.txt").read_text(encoding="utf-8", errors="strict")
+        self.assertIn("User-agent: *\nAllow: /", robots)
+        self.assertNotRegex(robots, r"(?im)^\s*Disallow\s*:")
+
     def test_homepage_json_ld_is_exact_visible_fact_entity(self) -> None:
         index = parse_repository_html("index.html")
         price = parse_repository_html("price.html")
+        implantation = parse_repository_html(IMPLANTATION_PAGE)
         self.assertEqual(len(index.json_ld_texts), 1)
         self.assertEqual(price.json_ld_texts, [])
+        self.assertEqual(implantation.json_ld_texts, [])
 
         entity = json.loads(index.json_ld_texts[0])
         expected = {
@@ -717,7 +993,7 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
         self.assertIn(b"<body", price_raw)
         price_body = b"<body" + price_raw.split(b"<body", 1)[1]
         canonical_price_body = canonicalize_newlines_to_lf(price_body)
-        approved_price_body_hash = "48a863421861d352123e3aa5363e5dbb7c1b65a103ba68135457d9b367d02a83"
+        approved_price_body_hash = "c3f4d4c35949adee4fd2c645c92e79b264cf7b785868d66566d324ed698dbf64"
         self.assertEqual(
             hashlib.sha256(canonical_price_body).hexdigest(),
             approved_price_body_hash,
@@ -734,7 +1010,7 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
         )
         self.assertEqual(
             hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
-            "0888f7c65e3e6cb1db0780f0f165c057c56dd5a9e49757d9b465a0b55df2609d",
+            "2da6b3fc641a157c7adad068528232c2538c2de49888963ae4c634f80666dd3e",
         )
 
     def test_contact_value_link_css_is_narrowly_scoped(self) -> None:
@@ -755,12 +1031,12 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
         self.assertEqual(source.count(expected), 1)
 
     def test_manifest_and_candidate_artifact_have_exact_public_inventory(self) -> None:
-        expected_new_files = {"robots.txt", "sitemap.xml"}
+        expected_new_files = {"robots.txt", "sitemap.xml", IMPLANTATION_PAGE}
         expected_protected_files = {".nojekyll", "CNAME"}
         forbidden_prefixes = (".github/", ".seo/", "docs/", "scripts/", "server/", "tests/")
 
-        self.assertEqual(len(self.manifest_entries), 56)
-        self.assertEqual(len(set(self.manifest_entries)), 56)
+        self.assertEqual(len(self.manifest_entries), 57)
+        self.assertEqual(len(set(self.manifest_entries)), 57)
         self.assertTrue(expected_new_files.issubset(self.manifest_entries))
         self.assertTrue(expected_protected_files.issubset(self.manifest_entries))
         self.assertNotIn("pages-public-manifest.txt", self.manifest_entries)
@@ -768,8 +1044,8 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
         self.assertFalse(
             any(entry.startswith(forbidden_prefixes) for entry in self.manifest_entries)
         )
-        self.assertEqual(self.build_report["file_count"], 56)
-        self.assertEqual(self.verify_report["file_count"], 56)
+        self.assertEqual(self.build_report["file_count"], 57)
+        self.assertEqual(self.verify_report["file_count"], 57)
         self.assertEqual(self.verify_report["status"], "verified")
 
         artifact_files = {
@@ -808,7 +1084,7 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
         loc_tag = f"{{{SITEMAP_NAMESPACE}}}loc"
         self.assertEqual(root.tag, f"{{{SITEMAP_NAMESPACE}}}urlset")
         urls = list(root)
-        self.assertEqual([element.tag for element in urls], [url_tag, url_tag])
+        self.assertEqual([element.tag for element in urls], [url_tag, url_tag, url_tag])
         for element in urls:
             self.assertEqual([child.tag for child in element], [loc_tag])
         locs = [element[0].text for element in urls]
@@ -823,6 +1099,7 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
         expected = {
             "index.html": "https://belladentclinik.kr.ua/",
             "price.html": "https://belladentclinik.kr.ua/price.html",
+            IMPLANTATION_PAGE: IMPLANTATION_CANONICAL,
         }
         for relative_path, canonical in expected.items():
             with self.subTest(relative_path=relative_path):
@@ -847,6 +1124,7 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
         self.assertEqual(price.hrefs.count("/#contacts"), 4)
         self.assertEqual(price.hrefs.count("/#services"), 1)
         self.assertEqual(price.hrefs.count("/#doctors"), 1)
+        self.assertEqual(price.hrefs.count("/implantatsiia-zubiv.html"), 1)
 
         normalized_fragments = {
             urlsplit(href).fragment
