@@ -34,3 +34,13 @@ Captured: 2026-08-16T08:15:59Z (2026-08-16T11:15:59+03:00, Europe/Kyiv)
 ## Next operational stage
 
 Independently verify this Draft PR and separately authorize the Ready-for-review transition. Entity facts require client confirmation and a later facts-baseline PR before any public entity, home, local, or Schema implementation.
+
+## 2026-08-18 — PR #11 deployment reconciliation and priority-service baseline
+
+- This dated section supersedes the older operational snapshot above. Remote `main` and production are both `890ed5df7f001f754df5e79eeddcef14d88e5844`; PR #11 is merged and deployed.
+- Deployment evidence: workflow run `32037331811`, artifact `9291103287`, Pages deployment `5946162353`, successful exact-SHA release, 56 public files, aggregate `3ee478233e604f88c4fa80edc8394f646ac067a808d42df78479d502a2c6c41d`, manifest SHA-256 `0888f7c65e3e6cb1db0780f0f165c057c56dd5a9e49757d9b465a0b55df2609d`.
+- Live entity/local contract now includes official address spelling, actionable phone/email/map links, map title, favicon, Open Graph/Twitter identity metadata, and one visible-fact-parity `Dentist` JSON-LD entity on the homepage. Meta descriptions remain open.
+- Current indexable canonicals are `/` and `/price.html`; `/index.html` is a duplicate route canonicalized to `/`. The sitemap contains only home and price. No distinct service URL exists.
+- Current source publishes 180 price rows across therapeutic dentistry (47), surgery (45), orthopedics/prosthetics (42), orthodontics (17), and implantology (29). Currentness and professional review were not independently verified.
+- Dated public search and first-party competitor evidence supports one prospective Ukrainian local commercial service page at `/implantatsiia-zubiv.html`. The page does not exist, is not in the sitemap, has no canonical or Schema, and remains `research_complete__implementation_blocked`.
+- Active P1 blockers are approved implantation service scope, approved Ukrainian copy, qualified professional reviewer identity/date/status, doctor/qualification provenance if used, current price approval if used, approved assets/permissions, CTA parity, and separate public implementation authorization. No P0 finding is open.

@@ -43,3 +43,14 @@
 After the Draft is opened, independently verify its exact head, facts, diff, and checks, then obtain separate authorization to mark it Ready. Merge remains separate. A public Entity/Home/Local PR remains later; public address/social/metadata/Schema changes and external-profile actions remain separately authorized. No deployment is needed for a `.seo/`-only facts merge.
 
 An outdated handoff must never override live repository, source, municipal, Maps, or deployment evidence.
+
+## 2026-08-18 priority-service architecture handoff
+
+- Current remote `main` and deployed SHA: `890ed5df7f001f754df5e79eeddcef14d88e5844`.
+- PR #11: merged/deployed; workflow `32037331811`; artifact `9291103287`; Pages deployment `5946162353`; exact 56-file production contract.
+- Current branch: `chore/bella-seo-priority-service-architecture`, based directly on that `main` SHA.
+- Exact scope: the 24 existing `.seo/` paths authorized by the direct prompt; no path added, deleted, renamed, mode-changed, or edited outside the allowlist.
+- Selected prospective page: `/implantatsiia-zubiv.html`, `uk`, Kryvyi Rih, local commercial implantation intent, `research_complete__implementation_blocked`.
+- Public impact: none. The page was not created; canonical, sitemap, Schema, HTML, CSS, JavaScript, assets, backend, workflow, tests, API/form, Clinic Life, and production remain unchanged.
+- No client confirmation is required for this architecture-only Draft. A public implantation page requires approved facts, Ukrainian copy, assets/permissions, CTA, current prices if used, doctor/qualification evidence if used, and qualified professional review.
+- Next separately authorized action after the Draft opens: independently verify the exact Draft and mark it Ready. Merge remains separate. No deployment is needed for this `.seo/`-only PR. Public implementation requires a new direct authorization.

@@ -1,16 +1,16 @@
 {
   "repository": "optidigitalagent/bella",
   "project_id": "bella",
-  "pull_request": 8,
-  "merged_sha": "1195107fabf3525d48cf11515bdc0ffb8a0f183d",
-  "deployed_sha": "1195107fabf3525d48cf11515bdc0ffb8a0f183d",
+  "pull_request": 11,
+  "merged_sha": "890ed5df7f001f754df5e79eeddcef14d88e5844",
+  "deployed_sha": "890ed5df7f001f754df5e79eeddcef14d88e5844",
   "production_url": "https://belladentclinik.kr.ua",
-  "production_verified_at": "2026-08-16T08:07:05Z",
+  "production_verified_at": "2026-08-18T06:23:55Z",
   "production_matches_deploy": true,
   "live_smoke_passed": true,
   "analytics_qa": "not_applicable",
   "state_files_updated": true,
-  "stale_branches_recorded": true,
+  "stale_branches_recorded": false,
   "validation_results_recorded": true,
   "closed": false
 }

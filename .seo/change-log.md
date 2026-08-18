@@ -50,3 +50,17 @@
 - Change: record a public-safe facts baseline and the current/legacy address distinction before any public entity/home/local work.
 - Release reference: Draft PR number intentionally unassigned until GitHub creates it; this branch is not merged or deployed.
 - Decision: stop after one Draft PR. Ready, merge, public-site/Schema implementation, deploy, indexing, and external-profile actions require separate authorization.
+
+## 2026-08-17 — PR #11 merged and exact-SHA production deployment
+
+- PR #11 merged as `890ed5df7f001f754df5e79eeddcef14d88e5844` with parents `a32867ebb0c7054b86329c15727d535daf12574d` and `071be5817779ffd12d3d13854ccd6e35ed7b9d31`.
+- Workflow `32037331811` built artifact `9291103287`; Pages deployment `5946162353` succeeded at the same SHA.
+- Production acceptance retained the exact 56-file contract and aggregate `3ee478233e604f88c4fa80edc8394f646ac067a808d42df78479d502a2c6c41d`.
+
+## 2026-08-18 — Priority-service architecture research branch work
+
+- Affected surface: exactly the 24 authorized existing `.seo/` records on `chore/bella-seo-priority-service-architecture`.
+- Change: record dated Ukrainian/Russian query observations, first-party and weak-directory evidence, current Bella content depth, and one governed prospective implantation mapping.
+- Architecture decision: `/implantatsiia-zubiv.html`, Ukrainian only, `research_complete__implementation_blocked`; no public file, canonical, sitemap entry, Schema, medical copy, or asset was created.
+- Release reference: no future PR number is assigned in advance; this branch is not merged or deployed and has no public-byte impact.
+- Decision: stop after one Draft PR. Ready, merge, public implementation, deployment, sitemap submission, indexing, external-account actions, and professional approval remain separate.
