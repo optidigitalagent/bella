@@ -1,1 +1,4 @@
 url,block,type,parse_valid,visible_fact_parity,eligible_feature,source_location,evidence_ids,issues,checked_at
+/,homepage_entity,Dentist,true,true,"current base entity only",index.html,"PR11; deployment_5946162353","One live Dentist entity; no service catalog or unsupported medical properties",2026-08-18T06:23:55Z
+/price.html,none,none,true,not_applicable,none,price.html,"deployment_5946162353","No JSON-LD is intentional/current",2026-08-18T06:23:55Z
+/implantatsiia-zubiv.html,not_created,none,not_applicable,not_applicable,none,not_created,"architecture_research_2026-08-18","No Schema approved; do not select MedicalProcedure Service or another type before visible reviewed content exists",2026-08-18T06:23:55Z

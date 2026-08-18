@@ -1,34 +1,37 @@
 {
-  "captured_at": "2026-08-16T08:15:59Z",
-  "environment": "production; GitHub Pages workflow build from main; deployment 5921688840; workflow run 31891801908",
-  "source_sha": "1195107fabf3525d48cf11515bdc0ffb8a0f183d",
+  "captured_at": "2026-08-18T06:23:55Z",
+  "environment": "production; GitHub Pages workflow build from main; deployment 5946162353; workflow run 32037331811; artifact 9291103287",
+  "source_sha": "890ed5df7f001f754df5e79eeddcef14d88e5844",
   "production_url": "https://belladentclinik.kr.ua",
   "source_html_sample": [
-    "branch=main; deployed_sha=1195107fabf3525d48cf11515bdc0ffb8a0f183d",
-    "pages_workflow=Bella Pages artifact isolation; run=31891801908; build_job=95029074327; deploy_job=95029100651; deployment=5921688840; status=success",
-    "artifact_id=9248733312; file_count=56; total_bytes=65503575; tree=c4cfd74020e782a74c1341613d8072a0a52246d4",
-    "artifact_git_aggregate_sha256=91db82f83e6ec8a550240f0b05f05a5650eeb157771d20fbabd8135ae5fca95a; manifest_sha256=0888f7c65e3e6cb1db0780f0f165c057c56dd5a9e49757d9b465a0b55df2609d; archive_digest=sha256:a414343efd0ca991300c584ae2c9c4728f3cfd122fb9cf46363cdb152303562f",
-    "public_html_routes=/,/index.html,/price.html; robots=/robots.txt; sitemap=/sitemap.xml",
-    "home_canonical=https://belladentclinik.kr.ua/; price_canonical=https://belladentclinik.kr.ua/price.html",
-    "robots=allow_all_with_production_sitemap; sitemap_urls=https://belladentclinik.kr.ua/|https://belladentclinik.kr.ua/price.html"
+    "branch=main; main_sha=890ed5df7f001f754df5e79eeddcef14d88e5844; deployed_sha=890ed5df7f001f754df5e79eeddcef14d88e5844",
+    "pages_workflow=Bella Pages artifact isolation; run=32037331811; deployment=5946162353; status=success",
+    "artifact_id=9291103287; file_count=56; artifact_sha256=3ee478233e604f88c4fa80edc8394f646ac067a808d42df78479d502a2c6c41d; manifest_sha256=0888f7c65e3e6cb1db0780f0f165c057c56dd5a9e49757d9b465a0b55df2609d",
+    "public_html_routes=/,/index.html,/price.html; indexable_canonicals=/,/price.html; robots=/robots.txt; sitemap=/sitemap.xml",
+    "home_canonical=https://belladentclinik.kr.ua/; index_html_canonical=https://belladentclinik.kr.ua/; price_canonical=https://belladentclinik.kr.ua/price.html",
+    "robots=allow_all_with_production_sitemap; sitemap_url_count=2; sitemap_urls=https://belladentclinik.kr.ua/|https://belladentclinik.kr.ua/price.html",
+    "home_metadata=favicon,OpenGraph,Twitter; home_json_ld=one_Dentist_visible_fact_parity; price_json_ld=none_intentional",
+    "prospective_service_page=/implantatsiia-zubiv.html; current_existence=false; canonical=not_created; sitemap=not_included; schema=not_approved; status=research_complete__implementation_blocked"
   ],
   "rendered_dom_sample": [
-    "2026-08-16 local HEAD: / 200; /index.html 200; /price.html 200; /robots.txt 200; /sitemap.xml 200",
+    "2026-08-18 local HEAD: / 200; /index.html 200; /price.html 200; /robots.txt 200; /sitemap.xml 200; logo 200; /implantatsiia-zubiv.html 404",
     "host_protocol_normalization: http_apex 301 to https_apex; http_www 301 to https_apex; https_www 301 to https_apex",
     "platform_path_behavior: /price 200 with price.html canonical; /price/ 404",
-    "isolation_404: /.seo/project.json, /server/package.json, /.github/workflows/pages.yml, /pages-public-manifest.txt, /bella-dent-clinic-fixed.html, and random missing route",
-    "structured_data_count=0; analytics_presence=absent",
-    "api_separation=https://bella-dent-api-production.up.railway.app; PR 1 changed no API, CORS, Railway, lead-form, Clinic Life, or Sheets integration code",
-    "retained_propagation: Check-Host public 200/private 404 reports across nine responding nodes; one node timeout; retained API health across two Ukraine and six other valid nodes"
+    "isolation_404: /.seo/project.json, /tests/test_pages_artifact_isolation.py, /server/, /.github/workflows/pages.yml, /pages-public-manifest.txt, and tracked price-background request",
+    "structured_data: homepage one Dentist entity with visible-fact parity; price none; prospective service page absent and no Schema approved",
+    "api_separation=https://bella-dent-api-production.up.railway.app; research branch changes no API, form, Clinic Life, Sheets, backend, public HTML, CSS, JavaScript, asset, workflow, test, robots, sitemap, CNAME, or manifest byte",
+    "research_branch_public_byte_impact=zero; .seo excluded by the positive 56-file artifact allowlist"
   ],
   "field_performance_source": null,
   "lab_performance_source": null,
   "known_gaps": [
-    "Published entity, NAP, contact, map, Bella/Nika, doctor, service, price, review, case, and medical values remain owner_confirmation_pending or require professional review; none are verified by this baseline",
+    "Entity/Home/Local facts are deployed; Nika relationship, canonical Facebook profile, Telegram URL, and third-party profile parity remain unresolved",
+    "No distinct service page exists; /implantatsiia-zubiv.html is research_complete__implementation_blocked pending approved facts, Ukrainian copy, assets, CTA, and qualified professional review",
+    "Published doctor roles and 180 price rows are current-publication observations only; professional verification and price currentness remain pending",
     "Tracked source asset images/фото для прайса.jpg is referenced by price.html but is omitted from pages-public-manifest.txt and the 56-file Pages artifact, so the public request returns 404",
     "Large/eager images remain future performance work; no Lighthouse, CrUX, ranking, traffic, or modeled score is recorded",
     "Sheet-fed doctor values reach innerHTML sinks and require a later safe-DOM hardening PR",
-    "No deployed analytics or verified conversion measurement",
-    "Earlier local route reliability was limited; exact deployment/artifact and retained multi-region evidence remain the fallback"
+    "No deployed analytics or verified conversion measurement; duplicate /index.html and stale 2024 footer remain open",
+    "Meta descriptions, performance, crawler-policy decisions, sitemap/indexing actions, and external-account work remain separate and unimplemented; no Lighthouse, CrUX, ranking, traffic, or modeled score is recorded"
   ]
 }

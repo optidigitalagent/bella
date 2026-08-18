@@ -32,3 +32,12 @@ Verified at 2026-08-16T13:50:02Z. This is a public-safe entity-facts baseline, n
 - No external profile or account action is authorized.
 - Direct client confirmation of current publication is not professional medical review or provenance.
 - No credentials, private chat transcripts, patient data, private evidence, or unpublished medical records belong in `.seo/`.
+
+## 2026-08-18 priority-service architecture decision
+
+- Business: Bella Dent Clinic; market: Kryvyi Rih, Ukraine; language: Ukrainian only; primary conversion: consultation form and phone contact.
+- Completed stages: publishing isolation, 53-file `.seo/` bootstrap, technical foundation, entity facts, Entity/Home/Local implementation, and PR #11 deployment at `890ed5df7f001f754df5e79eeddcef14d88e5844`.
+- Selected next cluster: implantation. It has the strongest combined fit between Bella's currently published 29-row implantology price category and revalidated first-party local competitor service-page patterns.
+- Architecture output: exactly one prospective URL, `/implantatsiia-zubiv.html`, status `research_complete__implementation_blocked`; no second service page and no Russian-language architecture are approved.
+- This PR is research-only and requires no client confirmation because it publishes no page, claim, price, asset, medical copy, canonical, sitemap entry, or Schema.
+- Future public work is blocked pending approved offering/scope, Ukrainian copy, qualified professional review, doctor provenance if used, current price approval if used, approved assets/permissions, CTA confirmation, metadata approval, and a new direct implementation authorization.

@@ -21,3 +21,11 @@
 | 3+ | Services/content/measurement/performance/external | Evidence, access, or approval remains incomplete | Execute one bounded risk area per later PR or external-action batch | Area-specific acceptance tests and direct authorization pass | Assigned owner | separate authorization per scope | Later |
 
 No public entity implementation or Schema work may begin before fact confirmation. Sitemap submission and indexing requests require separate explicit authorization. Keep one high-risk area per pull request; merge or deployment never follows implicitly from passing tests.
+
+## 2026-08-18 reconciled sequence
+
+- Completed: publishing isolation; `.seo/` bootstrap; technical foundation; entity facts; Entity/Home/Local; PR #11 merge and deployment.
+- Current: one `.seo/`-only architecture research PR mapping `/implantatsiia-zubiv.html` as `research_complete__implementation_blocked`.
+- Next after this PR: obtain approved implantation offering/scope, approved Ukrainian copy, approved assets and permissions, current price approval if used, CTA confirmation, and a qualified professional reviewer with provenance; then separately authorize and implement exactly one public service page.
+- Later gates: exact public tests and browser QA; independently authorize Ready; authorize merge separately; authorize any deployment separately. No deployment is needed for this `.seo/`-only research PR.
+- Deferred areas remain safe sheet-fed DOM construction, performance, approved descriptions, measurement, external profiles, sitemap submission, and indexing. None is authorized here.
