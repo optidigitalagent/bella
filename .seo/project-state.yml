@@ -4,16 +4,16 @@
   "default_branch": "main",
   "production_url": "https://belladentclinik.kr.ua",
   "requested_action": "draft_pr",
-  "authorization_level": "audit, branch, edit, tests, commit, push, draft_pr",
+  "authorization_level": "audit, edit, tests, commit, push, draft_pr",
   "client_industry": "dentistry",
   "primary_market": "Ukraine, Kryvyi Rih",
   "primary_language": "uk",
-  "verified_at": "2026-08-18T06:23:55Z",
-  "remote_main_sha": "890ed5df7f001f754df5e79eeddcef14d88e5844",
-  "local_main_sha": "890ed5df7f001f754df5e79eeddcef14d88e5844",
+  "verified_at": "2026-08-18T09:42:02Z",
+  "remote_main_sha": "3c55b3213be82b2c064c03e6c991ee7d73beb091",
+  "local_main_sha": "3c55b3213be82b2c064c03e6c991ee7d73beb091",
   "deployed_sha": "890ed5df7f001f754df5e79eeddcef14d88e5844",
   "open_prs": [],
-  "recently_merged_prs": [6, 7, 8, 9, 11],
+  "recently_merged_prs": [6, 7, 8, 9, 11, 12],
   "active_branches": [
     "agent/clinic-life-final-design",
     "agent/production-e2e-qa",
@@ -25,12 +25,18 @@
     "chore/bella-seo-technical-foundation",
     "feat/clinic-life-telegram-cms",
     "fix/configure-production-api",
-    "chore/bella-seo-priority-service-architecture"
+    "chore/bella-seo-priority-service-architecture",
+    "chore/bella-seo-implantation-confirmed-copy-draft"
   ],
-  "handoff_sha": "890ed5df7f001f754df5e79eeddcef14d88e5844",
+  "handoff_sha": "3c55b3213be82b2c064c03e6c991ee7d73beb091",
   "handoff_matches_remote": true,
   "overlapping_active_pr": false,
   "production_matches_deploy": true,
   "external_state_verified": true,
-  "worktree_clean": true
+  "worktree_clean": true,
+  "stage": "implantation_client_confirmation_and_copy_draft",
+  "source_parity": "resolved_by_live_sheet_authority__29_of_29_price_currency__26_of_29_names",
+  "fallback_parity": "later_code_pr_required__three_names_only",
+  "medical_review": "required",
+  "public_implementation": "unauthorized"
 }

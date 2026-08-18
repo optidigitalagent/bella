@@ -41,3 +41,12 @@ Verified at 2026-08-16T13:50:02Z. This is a public-safe entity-facts baseline, n
 - Architecture output: exactly one prospective URL, `/implantatsiia-zubiv.html`, status `research_complete__implementation_blocked`; no second service page and no Russian-language architecture are approved.
 - This PR is research-only and requires no client confirmation because it publishes no page, claim, price, asset, medical copy, canonical, sitemap entry, or Schema.
 - Future public work is blocked pending approved offering/scope, Ukrainian copy, qualified professional review, doctor provenance if used, current price approval if used, approved assets/permissions, CTA confirmation, metadata approval, and a new direct implementation authorization.
+
+## 2026-08-18 client-confirmed implantation copy-draft decision
+
+- Confirmer: client/owner-side representative of Bella Dent Clinic. Scope: the exact content currently published by Bella at the verified production/source snapshot. Status: `client_confirmed__current_publication`; valid as of 2026-08-18 and requiring refresh before any later publication decision.
+- Source precedence for implantation names, amounts, and currencies is: (1) live public Google Sheet, (2) static `prices.js` fallback at exact `origin/main`, (3) older reports or memory. The live Sheet is authoritative because it is the dynamic source currently delivered by the site and the confirmation applies to that exact current publication.
+- Comparison result: 29/29 exact amount/currency parity and 26/29 exact name parity. The only differences are Sheet row 2 slash versus fallback comma and Sheet rows 23–24 decimal points versus fallback commas. They are `STATIC_FALLBACK_TEXT_PARITY_DRIFT`, not price conflicts.
+- Objective: maintain one evidence-constrained Ukrainian copy draft for `/implantatsiia-zubiv.html` inside `.seo/`, using only confirmed business/location/CTA facts, the 29 exact live-Sheet rows, and the exact published doctor name/role.
+- Limits: no medical process, diagnostic, suitability, contraindication, risk, duration, recovery, pain, outcome, brand interpretation, FAQ answer, credential, licence, reviewer, consent, case, image-rights, or competitor fact may be inferred. Blank intake choices are not confirmations.
+- The draft is `NOT APPROVED FOR PUBLICATION`. A named qualified medical reviewer, review evidence, and later separate public implementation authorization are still required; no public page, Schema, metadata, canonical, sitemap, or deployment is allowed here.
