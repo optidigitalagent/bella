@@ -64,3 +64,11 @@
 - Architecture decision: `/implantatsiia-zubiv.html`, Ukrainian only, `research_complete__implementation_blocked`; no public file, canonical, sitemap entry, Schema, medical copy, or asset was created.
 - Release reference: no future PR number is assigned in advance; this branch is not merged or deployed and has no public-byte impact.
 - Decision: stop after one Draft PR. Ready, merge, public implementation, deployment, sitemap submission, indexing, external-account actions, and professional approval remain separate.
+
+## 2026-08-18 — PR #12 merge reconciliation and implantation confirmation/copy draft
+
+- PR #12 merged as `3c55b3213be82b2c064c03e6c991ee7d73beb091`; it changed only `.seo/` architecture records and required no deployment. Production remains `890ed5df7f001f754df5e79eeddcef14d88e5844` with the unchanged 56-file public artifact.
+- Current branch: `chore/bella-seo-implantation-confirmed-copy-draft`; affected surface: exactly the 20 existing `.seo/` paths in the fresh direct authorization.
+- Change: normalize the 2026-08-18 client/owner-side confirmation; select the live public Sheet over the static fallback for current implantation names/prices; record 29/29 amount/currency parity and the exact three name-only fallback drifts; and prepare a source-mapped, non-public Ukrainian draft with clinical placeholders.
+- The branch is not merged or deployed. No future PR number is assigned in advance. `prices.js` is not repaired here; its later three-name synchronization is a separate public-byte PR.
+- Decision: stop after exactly one Draft PR. Ready, merge, deploy, public implementation, medical approval, reviewer attribution, sitemap/indexing, and external-account actions remain separate and unauthorized.

@@ -25,7 +25,10 @@ No public entity implementation or Schema work may begin before fact confirmatio
 ## 2026-08-18 reconciled sequence
 
 - Completed: publishing isolation; `.seo/` bootstrap; technical foundation; entity facts; Entity/Home/Local; PR #11 merge and deployment.
-- Current: one `.seo/`-only architecture research PR mapping `/implantatsiia-zubiv.html` as `research_complete__implementation_blocked`.
-- Next after this PR: obtain approved implantation offering/scope, approved Ukrainian copy, approved assets and permissions, current price approval if used, CTA confirmation, and a qualified professional reviewer with provenance; then separately authorize and implement exactly one public service page.
-- Later gates: exact public tests and browser QA; independently authorize Ready; authorize merge separately; authorize any deployment separately. No deployment is needed for this `.seo/`-only research PR.
+- Completed after that: PR #12 merged the `.seo/` architecture as `3c55b3213be82b2c064c03e6c991ee7d73beb091`; no deployment was needed.
+- Current: one `.seo/`-only confirmation/copy-draft PR on `chore/bella-seo-implantation-confirmed-copy-draft`. The live Sheet is authoritative; the draft is non-public and not medically approved.
+- Next after this Draft: independent exact-head verification and separately authorized Ready, followed by a separately authorized merge. No deployment is needed for this `.seo/`-only merge.
+- Next evidence stage: a named qualified medical reviewer reviews the exact draft and supplies source/evidence for each clinical section; record the review in a later separately authorized `.seo/` medical-review PR.
+- Later: a separately authorized public implementation PR may create the page only after facts, review, copy, assets, CTA, metadata, and Schema decisions pass. Public Ready, merge, deployment, sitemap submission, and indexing remain independent permissions.
+- Separate code-parity stage: synchronize only the three `prices.js` fallback names to the live Sheet in its own public-byte PR with its own edit/tests/commit/push/Draft/Ready/merge/deploy authorizations.
 - Deferred areas remain safe sheet-fed DOM construction, performance, approved descriptions, measurement, external profiles, sitemap submission, and indexing. None is authorized here.

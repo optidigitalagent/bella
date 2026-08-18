@@ -5,12 +5,20 @@
   "merged_sha": "890ed5df7f001f754df5e79eeddcef14d88e5844",
   "deployed_sha": "890ed5df7f001f754df5e79eeddcef14d88e5844",
   "production_url": "https://belladentclinik.kr.ua",
-  "production_verified_at": "2026-08-18T06:23:55Z",
+  "production_verified_at": "2026-08-18T09:42:02Z",
   "production_matches_deploy": true,
   "live_smoke_passed": true,
   "analytics_qa": "not_applicable",
   "state_files_updated": true,
   "stale_branches_recorded": false,
   "validation_results_recorded": true,
-  "closed": false
+  "closed": false,
+  "latest_seo_merge_pr": 12,
+  "latest_seo_merge_sha": "3c55b3213be82b2c064c03e6c991ee7d73beb091",
+  "current_branch": "chore/bella-seo-implantation-confirmed-copy-draft",
+  "current_branch_released": false,
+  "current_branch_public_byte_impact": "zero",
+  "deployment_required_for_current_branch": false,
+  "prospective_page_created": false,
+  "sitemap_or_indexing_performed": false
 }
