@@ -1340,12 +1340,13 @@ document.querySelectorAll('button').forEach(b => {
   priceData.forEach(function(cat, i) {
     var a = document.createElement('a');
     a.className = 'service-card';
-    a.href = 'price.html#' + cat.slug;
+    a.href = cat.slug === 'implantolohiia' ? 'implantatsiia-zubiv.html' : 'price.html#' + cat.slug;
+    var cardCta = cat.slug === 'implantolohiia' ? 'Детальніше про імплантацію' : 'Відкрити прайс';
     a.innerHTML =
       '<div class="service-icon">' + icons[i % icons.length] + '</div>' +
       '<div class="service-name">' + cat.title + '</div>' +
       '<p class="service-desc">' + cat.desc + '</p>' +
-      '<div class="service-price-cta">Відкрити прайс ' +
+      '<div class="service-price-cta">' + cardCta + ' ' +
         '<svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>' +
       '</div>';
     grid.appendChild(a);
