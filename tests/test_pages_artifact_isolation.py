@@ -14,7 +14,7 @@ import subprocess
 import tempfile
 import time
 import unittest
-from urllib.parse import urlsplit
+from urllib.parse import quote, urlsplit
 import xml.etree.ElementTree as ET
 
 
@@ -990,10 +990,6 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
             self.assertNotIn("t.me/", source.casefold())
             self.assertNotIn("telegram.me/", source.casefold())
 
-        price_source = price_path.read_text(encoding="utf-8", errors="strict")
-        self.assertEqual(price_source.count('background-image:url("images/фото для прайса.jpg")'), 1)
-        self.assertNotIn("images/фото для прайса.jpg", self.manifest_entries)
-
         price_raw = price_path.read_bytes()
         self.assertIn(b"<body", price_raw)
         price_body = b"<body" + price_raw.split(b"<body", 1)[1]
@@ -1016,6 +1012,101 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
         self.assertEqual(
             hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
             "2da6b3fc641a157c7adad068528232c2538c2de49888963ae4c634f80666dd3e",
+        )
+
+    def test_price_hero_stale_reference_is_absent_from_public_code(self) -> None:
+        stale_filename = "фото для прайса.jpg"
+        stale_path = f"images/{stale_filename}"
+        encoded_filename = quote(stale_filename, safe="").casefold()
+        encoded_path = quote(stale_path, safe="/").casefold()
+
+        self.assertNotIn(stale_path, self.manifest_entries)
+        self.assertEqual(len(self.manifest_entries), 57)
+        for relative_path in self.manifest_entries:
+            if Path(relative_path).suffix.casefold() not in {".css", ".html", ".js"}:
+                continue
+            source = (REPOSITORY_ROOT / relative_path).read_text(
+                encoding="utf-8",
+                errors="strict",
+            )
+            with self.subTest(relative_path=relative_path):
+                self.assertNotIn(stale_filename, source)
+                self.assertNotIn(stale_path, source)
+                self.assertNotIn(encoded_filename, source.casefold())
+                self.assertNotIn(encoded_path, source.casefold())
+
+        artifact_price = self.output / "price.html"
+        self.assertNotIn(
+            stale_path,
+            VERIFIER._references_for("price.html", artifact_price),
+        )
+        artifact_source = artifact_price.read_text(encoding="utf-8", errors="strict")
+        self.assertNotIn(stale_path, artifact_source)
+        self.assertNotIn(encoded_path, artifact_source.casefold())
+
+    def test_price_catalog_and_public_diff_boundary_are_exact(self) -> None:
+        price_source = (REPOSITORY_ROOT / "price.html").read_text(
+            encoding="utf-8",
+            errors="strict",
+        )
+        expected_price_hero_rule = (
+            ".price-hero{padding:160px 0 90px;position:relative;"
+            "background-size:cover;background-position:center;"
+            "background-repeat:no-repeat;"
+            "border-bottom:1px solid rgba(196,154,85,.15);}"
+        )
+        self.assertEqual(price_source.count(expected_price_hero_rule), 1)
+        self.assertEqual(price_source.count(".price-hero::before{"), 1)
+
+        prices_path = REPOSITORY_ROOT / "prices.js"
+        prices_source = prices_path.read_text(encoding="utf-8", errors="strict")
+        self.assertEqual(
+            hashlib.sha256(prices_path.read_bytes()).hexdigest(),
+            "7d2e77794f9b8ac99bd5c97c7f94115e21df7d4ea642a806e93a801d9e70be77",
+        )
+        self.assertEqual(len(re.findall(r"(?m)^\s*title:", prices_source)), 5)
+        self.assertEqual(
+            len(re.findall(r"\{ name: '.*?', price: '.*?' \}", prices_source)),
+            180,
+        )
+
+        price = parse_repository_html("price.html")
+        self.assertEqual(price.titles, ["Прайс клініки — Bella Dent Clinic"])
+        self.assertEqual(price.canonicals, [f"{SITE_ROOT}price.html"])
+        self.assertEqual(price.json_ld_texts, [])
+        self.assertEqual(price.hrefs.count("/implantatsiia-zubiv.html"), 1)
+
+        public_records = []
+        for relative_path in self.manifest_entries:
+            if relative_path == "price.html":
+                continue
+            object_id = subprocess.run(
+                ["git", "hash-object", f"--path={relative_path}", relative_path],
+                cwd=REPOSITORY_ROOT,
+                check=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            ).stdout.strip()
+            public_records.append(f"{relative_path}\0{object_id}")
+        public_aggregate = hashlib.sha256("\n".join(public_records).encode("utf-8")).hexdigest()
+        self.assertEqual(len(public_records), 56)
+        self.assertEqual(
+            public_aggregate,
+            "bacf4f730427562d4f6ece2db17af7e2ec14d99205a67622b75e4ea2f8fa4360",
+        )
+        candidate_price_object = subprocess.run(
+            ["git", "hash-object", "--path=price.html", "price.html"],
+            cwd=REPOSITORY_ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+        ).stdout.strip()
+        self.assertEqual(candidate_price_object, "957d65949079bbc9b5a92207ab5179f82c151288")
+        self.assertNotEqual(
+            candidate_price_object,
+            "52db00f3a4b7e893ed477bd97c91084f8a590cba",
         )
 
     def test_contact_value_link_css_is_narrowly_scoped(self) -> None:
