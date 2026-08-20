@@ -1,13 +1,18 @@
 from __future__ import annotations
 
+import base64
 import hashlib
+from html import unescape
 import importlib.util
 from html.parser import HTMLParser
 import json
 import os
 from pathlib import Path
 import re
+import shutil
+import subprocess
 import tempfile
+import time
 import unittest
 from urllib.parse import urlsplit
 import xml.etree.ElementTree as ET
@@ -1133,6 +1138,309 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
         }
         self.assertTrue(normalized_fragments)
         self.assertTrue(normalized_fragments.issubset(home.ids))
+
+
+class RepositoryDoctorDomSecurityTests(unittest.TestCase):
+    MALICIOUS_NAME = '<img src=x onerror="window.__bellaInjected=1">Dr Test'
+    MALICIOUS_ROLE = '<svg onload="window.__bellaInjected=2"></svg><script>window.__bellaInjected=3</script>'
+    ADDITIONAL_TEXT = '<b>Implantologist</b> & "quoted"'
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.source = (REPOSITORY_ROOT / "index.html").read_text(encoding="utf-8", errors="strict")
+        marker = "/* ── Секція «Наші лікарі»"
+        marker_offset = cls.source.index(marker)
+        script_start = cls.source.rfind("<script>", 0, marker_offset)
+        script_end = cls.source.index("</script>", marker_offset)
+        cls.doctor_script = cls.source[script_start + len("<script>") : script_end]
+
+        style_start = cls.source.index("<style>")
+        style_end = cls.source.index("</style>", style_start) + len("</style>")
+        cls.styles = cls.source[style_start:style_end]
+
+        candidates = [
+            os.environ.get("BELLA_CHROME_PATH"),
+            shutil.which("google-chrome"),
+            shutil.which("google-chrome-stable"),
+            shutil.which("chromium"),
+            shutil.which("chromium-browser"),
+            r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+        ]
+        cls.chrome = next(
+            (str(candidate) for candidate in candidates if candidate and Path(candidate).is_file()),
+            None,
+        )
+        if cls.chrome is None:
+            raise AssertionError("system Chrome is required for doctor DOM security regression tests")
+
+    @classmethod
+    def browser_result(
+        cls,
+        doctors: list[dict[str, object]] | None = None,
+        *,
+        ready: bool = True,
+        reject: bool = False,
+    ) -> dict[str, object]:
+        fixture_json = json.dumps(doctors or [], ensure_ascii=True, separators=(",", ":"))
+        fixture_base64 = base64.b64encode(fixture_json.encode("ascii")).decode("ascii")
+        if reject:
+            load_expression = "Promise.reject(new Error('deterministic Sheet failure'))"
+        else:
+            load_expression = f"Promise.resolve(JSON.parse(atob('{fixture_base64}')))"
+
+        instrumentation = """
+<script>
+window.__bellaErrors = [];
+window.addEventListener('error', function (event) {
+  window.__bellaErrors.push(String(event.message || event.error || 'error'));
+});
+window.addEventListener('unhandledrejection', function (event) {
+  window.__bellaErrors.push(String(event.reason || 'unhandled rejection'));
+});
+</script>
+"""
+        sheets_stub = f"""
+<script>
+window.SheetsLoader = {{
+  ready: {str(ready).lower()},
+  loadDoctorsData: function () {{ return {load_expression}; }}
+}};
+</script>
+"""
+        result_probe = """
+<pre id="results"></pre>
+<script>
+setTimeout(function () {
+  var grid = document.getElementById('doctors-grid');
+  var gridRect = grid.getBoundingClientRect();
+  var cards = Array.from(grid.querySelectorAll('.doctor-card')).map(function (card) {
+    var image = card.querySelector('.doctor-photo img');
+    return {
+      className: card.className,
+      name: card.querySelector('.doctor-name').textContent,
+      role: card.querySelector('.doctor-role').textContent,
+      photo: image ? image.getAttribute('src') : null,
+      alt: image ? image.getAttribute('alt') : null,
+      plusCount: card.querySelectorAll('.doctor-plus').length
+    };
+  });
+  var layoutContained = Array.from(grid.querySelectorAll('.doctor-card')).every(function (card) {
+    var rect = card.getBoundingClientRect();
+    return rect.left >= gridRect.left - 0.5 && rect.right <= gridRect.right + 0.5;
+  });
+  document.getElementById('results').textContent = JSON.stringify({
+    cards: cards,
+    injectedOwnProperty: Object.prototype.hasOwnProperty.call(window, '__bellaInjected'),
+    injectedValue: window.__bellaInjected === undefined ? null : window.__bellaInjected,
+    injectedImageCount: grid.querySelectorAll('img[src="x"]').length,
+    injectedSvgCount: grid.querySelectorAll('svg[onload]').length,
+    injectedScriptCount: grid.querySelectorAll('script').length,
+    errors: window.__bellaErrors,
+    layoutContained: layoutContained,
+    horizontalOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth
+  });
+}, 250);
+</script>
+"""
+        harness = "".join(
+            (
+                "<!doctype html><html><head><meta charset=\"utf-8\">",
+                f'<base href="{REPOSITORY_ROOT.as_uri()}/">',
+                cls.styles,
+                "</head><body><section id=\"doctors\"><div class=\"container\">",
+                '<div class="doctors-grid" id="doctors-grid"></div>',
+                "</div></section>",
+                instrumentation,
+                sheets_stub,
+                "<script>",
+                cls.doctor_script,
+                "</script>",
+                result_probe,
+                "</body></html>",
+            )
+        )
+
+        with tempfile.TemporaryDirectory(prefix="bella-doctor-browser-") as temporary_directory:
+            temp_root = Path(temporary_directory)
+            harness_path = temp_root / "doctor-harness.html"
+            profile_path = temp_root / "chrome-profile"
+            stdout_path = temp_root / "chrome-stdout.txt"
+            harness_path.write_text(harness, encoding="utf-8", newline="\n")
+            with stdout_path.open("wb") as stdout_file:
+                completed = subprocess.run(
+                    [
+                        cls.chrome,
+                        "--headless=new",
+                        "--disable-background-networking",
+                        "--disable-component-update",
+                        "--disable-default-apps",
+                        "--disable-extensions",
+                        "--disable-gpu",
+                        "--no-first-run",
+                        "--no-sandbox",
+                        "--allow-file-access-from-files",
+                        "--run-all-compositor-stages-before-draw",
+                        "--virtual-time-budget=1000",
+                        "--window-size=390,844",
+                        f"--user-data-dir={profile_path}",
+                        "--dump-dom",
+                        harness_path.as_uri(),
+                    ],
+                    stdout=stdout_file,
+                    stderr=subprocess.DEVNULL,
+                    timeout=60,
+                    check=False,
+                )
+            stdout = stdout_path.read_text(encoding="utf-8", errors="replace")
+            for attempt in range(100):
+                try:
+                    if stdout_path.exists():
+                        stdout_path.unlink()
+                    if profile_path.exists():
+                        shutil.rmtree(profile_path)
+                    break
+                except PermissionError:
+                    if attempt == 99:
+                        raise AssertionError("Chrome did not release its temporary profile")
+                    time.sleep(0.1)
+        if completed.returncode != 0:
+            raise AssertionError(f"Chrome DOM harness failed with {completed.returncode}")
+        match = re.search(r'<pre id="results">(.*?)</pre>', stdout, flags=re.DOTALL)
+        if match is None or not match.group(1):
+            raise AssertionError("Chrome DOM harness did not publish results")
+        return json.loads(unescape(match.group(1)))
+
+    def test_sheet_fed_text_uses_safe_dom_construction_only(self) -> None:
+        render_block = self.doctor_script[self.doctor_script.index("function renderDoctors") :]
+        self.assertIn("grid.replaceChildren();", render_block)
+        self.assertEqual(render_block.count("nameDiv.textContent = d.name;"), 1)
+        self.assertEqual(render_block.count("roleDiv.textContent = d.role;"), 1)
+        self.assertNotIn("infoDiv.innerHTML", render_block)
+        self.assertNotIn("insertAdjacentHTML", render_block)
+        self.assertNotIn("outerHTML", render_block)
+        self.assertNotIn("document.write", render_block)
+
+        inner_html_assignments = re.findall(
+            r"(\w+)\.innerHTML\s*=\s*([^;]+);",
+            render_block,
+        )
+        self.assertEqual(
+            inner_html_assignments,
+            [("photoDiv", "PLACEHOLDER_SVG"), ("photoDiv", "PLACEHOLDER_SVG")],
+        )
+        self.assertTrue(all("d." not in value for _, value in inner_html_assignments))
+
+        placeholder_block = self.doctor_script[
+            self.doctor_script.index("var PLACEHOLDER_SVG") : self.doctor_script.index("function renderDoctors")
+        ]
+        self.assertNotIn("d.", placeholder_block)
+        self.assertNotIn("${", placeholder_block)
+
+    def test_normal_sheet_fixture_is_editable_and_preserves_card_contract(self) -> None:
+        doctors = [
+            {
+                "name": "Редагований лікар",
+                "role": "Лікар-стоматолог",
+                "photo": "doctors/oliynyk1.png",
+                "isNurse": False,
+            },
+            {
+                "name": "Редагована асистентка",
+                "role": "Медична сестра",
+                "photo": "doctors/sokolova.png",
+                "isNurse": True,
+            },
+        ]
+        first = self.browser_result(doctors)
+        changed = [dict(doctor) for doctor in doctors]
+        changed[0]["name"] = "Ім’я змінено лише у Google Sheet fixture"
+        second = self.browser_result(changed)
+
+        self.assertEqual(len(first["cards"]), 2)
+        self.assertEqual(
+            [card["className"] for card in first["cards"]],
+            ["doctor-card", "doctor-card doctor-card--nurse"],
+        )
+        self.assertEqual(
+            [card["name"] for card in first["cards"]],
+            [doctor["name"] for doctor in doctors],
+        )
+        self.assertEqual(
+            [card["role"] for card in first["cards"]],
+            [doctor["role"] for doctor in doctors],
+        )
+        self.assertEqual(
+            [card["photo"] for card in first["cards"]],
+            [doctor["photo"] for doctor in doctors],
+        )
+        self.assertEqual(
+            [card["alt"] for card in first["cards"]],
+            [doctor["name"] for doctor in doctors],
+        )
+        self.assertEqual([card["plusCount"] for card in first["cards"]], [1, 0])
+        self.assertEqual(first["cards"][1:], second["cards"][1:])
+        self.assertEqual(second["cards"][0]["name"], changed[0]["name"])
+        self.assertNotEqual(first["cards"][0]["name"], second["cards"][0]["name"])
+        self.assertNotIn(changed[0]["name"], self.source)
+        self.assertTrue(first["layoutContained"])
+        self.assertFalse(first["horizontalOverflow"])
+        self.assertEqual(first["errors"], [])
+
+    def test_sheet_unavailable_and_failed_load_preserve_static_fallback(self) -> None:
+        expected_names = [
+            "Олійник Ігор Євгенійович",
+            "Рибін Олександр Володимирович",
+            "Соколова Анастасія Сергіївна",
+            "Сідих Катерина Іванівна",
+            "Левченко Ірина Михайлівна",
+        ]
+        expected_classes = [
+            "doctor-card",
+            "doctor-card",
+            "doctor-card doctor-card--nurse",
+            "doctor-card doctor-card--nurse",
+            "doctor-card doctor-card--nurse",
+        ]
+        unavailable = self.browser_result(ready=False)
+        failed = self.browser_result(reject=True)
+        for result in (unavailable, failed):
+            self.assertEqual([card["name"] for card in result["cards"]], expected_names)
+            self.assertEqual([card["className"] for card in result["cards"]], expected_classes)
+            self.assertEqual([card["plusCount"] for card in result["cards"]], [1, 1, 0, 0, 0])
+            self.assertEqual([card["alt"] for card in result["cards"]], expected_names)
+            self.assertTrue(all(card["photo"] for card in result["cards"]))
+            self.assertTrue(result["layoutContained"])
+            self.assertFalse(result["horizontalOverflow"])
+            self.assertEqual(result["errors"], [])
+
+    def test_adversarial_sheet_markup_is_literal_and_never_executes(self) -> None:
+        fixture = [
+            {
+                "name": self.MALICIOUS_NAME,
+                "role": self.MALICIOUS_ROLE,
+                "photo": "",
+                "isNurse": False,
+            },
+            {
+                "name": "Additional text fixture",
+                "role": self.ADDITIONAL_TEXT,
+                "photo": "",
+                "isNurse": False,
+            },
+        ]
+        result = self.browser_result(fixture)
+        self.assertEqual(len(result["cards"]), 2)
+        self.assertEqual(result["cards"][0]["name"], self.MALICIOUS_NAME)
+        self.assertEqual(result["cards"][0]["role"], self.MALICIOUS_ROLE)
+        self.assertEqual(result["cards"][1]["role"], self.ADDITIONAL_TEXT)
+        self.assertFalse(result["injectedOwnProperty"])
+        self.assertIsNone(result["injectedValue"])
+        self.assertEqual(result["injectedImageCount"], 0)
+        self.assertEqual(result["injectedSvgCount"], 0)
+        self.assertEqual(result["injectedScriptCount"], 0)
+        self.assertEqual(result["errors"], [])
+        self.assertTrue(result["layoutContained"])
+        self.assertFalse(result["horizontalOverflow"])
 
 
 class WorkflowPolicyTests(unittest.TestCase):
