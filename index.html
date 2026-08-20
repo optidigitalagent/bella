@@ -1419,7 +1419,7 @@ document.querySelectorAll('button').forEach(b => {
   function renderDoctors(doctors) {
     var grid = document.getElementById('doctors-grid');
     if (!grid) return;
-    grid.innerHTML = '';
+    grid.replaceChildren();
     doctors.forEach(function (d, idx) {
       var card = document.createElement('div');
       card.className = 'doctor-card' + (d.isNurse ? ' doctor-card--nurse' : '');
@@ -1439,16 +1439,34 @@ document.querySelectorAll('button').forEach(b => {
 
       var infoDiv = document.createElement('div');
       infoDiv.className = 'doctor-info';
-      infoDiv.innerHTML =
-        '<div class="doctor-info-header">' +
-          '<div>' +
-            '<div class="doctor-name">' + d.name + '</div>' +
-            '<div class="doctor-role">' + d.role + '</div>' +
-          '</div>' +
-          (!d.isNurse
-            ? '<div class="doctor-plus"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></div>'
-            : '') +
-        '</div>';
+
+      var infoHeader = document.createElement('div');
+      infoHeader.className = 'doctor-info-header';
+
+      var textDiv = document.createElement('div');
+      var nameDiv = document.createElement('div');
+      nameDiv.className = 'doctor-name';
+      nameDiv.textContent = d.name;
+      var roleDiv = document.createElement('div');
+      roleDiv.className = 'doctor-role';
+      roleDiv.textContent = d.role;
+      textDiv.appendChild(nameDiv);
+      textDiv.appendChild(roleDiv);
+      infoHeader.appendChild(textDiv);
+
+      if (!d.isNurse) {
+        var plusDiv = document.createElement('div');
+        plusDiv.className = 'doctor-plus';
+        var plusSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        plusSvg.setAttribute('viewBox', '0 0 24 24');
+        var plusPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        plusPath.setAttribute('d', 'M12 5v14M5 12h14');
+        plusSvg.appendChild(plusPath);
+        plusDiv.appendChild(plusSvg);
+        infoHeader.appendChild(plusDiv);
+      }
+
+      infoDiv.appendChild(infoHeader);
 
       card.appendChild(photoDiv);
       card.appendChild(infoDiv);
