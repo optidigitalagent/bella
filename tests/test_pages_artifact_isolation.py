@@ -10,11 +10,12 @@ import os
 from pathlib import Path
 import re
 import shutil
+import signal
 import subprocess
 import tempfile
 import time
 import unittest
-from urllib.parse import urlsplit
+from urllib.parse import quote, urlsplit
 import xml.etree.ElementTree as ET
 
 
@@ -990,10 +991,6 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
             self.assertNotIn("t.me/", source.casefold())
             self.assertNotIn("telegram.me/", source.casefold())
 
-        price_source = price_path.read_text(encoding="utf-8", errors="strict")
-        self.assertEqual(price_source.count('background-image:url("images/фото для прайса.jpg")'), 1)
-        self.assertNotIn("images/фото для прайса.jpg", self.manifest_entries)
-
         price_raw = price_path.read_bytes()
         self.assertIn(b"<body", price_raw)
         price_body = b"<body" + price_raw.split(b"<body", 1)[1]
@@ -1016,6 +1013,111 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
         self.assertEqual(
             hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
             "2da6b3fc641a157c7adad068528232c2538c2de49888963ae4c634f80666dd3e",
+        )
+
+    def test_price_hero_stale_reference_is_absent_from_public_code(self) -> None:
+        stale_filename = "фото для прайса.jpg"
+        stale_path = f"images/{stale_filename}"
+        encoded_filename = quote(stale_filename, safe="").casefold()
+        encoded_path = quote(stale_path, safe="/").casefold()
+
+        self.assertNotIn(stale_path, self.manifest_entries)
+        self.assertEqual(len(self.manifest_entries), 57)
+        for relative_path in self.manifest_entries:
+            if Path(relative_path).suffix.casefold() not in {".css", ".html", ".js"}:
+                continue
+            source = (REPOSITORY_ROOT / relative_path).read_text(
+                encoding="utf-8",
+                errors="strict",
+            )
+            with self.subTest(relative_path=relative_path):
+                self.assertNotIn(stale_filename, source)
+                self.assertNotIn(stale_path, source)
+                self.assertNotIn(encoded_filename, source.casefold())
+                self.assertNotIn(encoded_path, source.casefold())
+
+        artifact_price = self.output / "price.html"
+        self.assertNotIn(
+            stale_path,
+            VERIFIER._references_for("price.html", artifact_price),
+        )
+        artifact_source = artifact_price.read_text(encoding="utf-8", errors="strict")
+        self.assertNotIn(stale_path, artifact_source)
+        self.assertNotIn(encoded_path, artifact_source.casefold())
+
+    def test_price_catalog_and_public_diff_boundary_are_exact(self) -> None:
+        price_source = (REPOSITORY_ROOT / "price.html").read_text(
+            encoding="utf-8",
+            errors="strict",
+        )
+        expected_price_hero_rule = (
+            ".price-hero{padding:160px 0 90px;position:relative;"
+            "background-size:cover;background-position:center;"
+            "background-repeat:no-repeat;"
+            "border-bottom:1px solid rgba(196,154,85,.15);}"
+        )
+        self.assertEqual(price_source.count(expected_price_hero_rule), 1)
+        self.assertEqual(price_source.count(".price-hero::before{"), 1)
+
+        prices_path = REPOSITORY_ROOT / "prices.js"
+        prices_source = prices_path.read_text(encoding="utf-8", errors="strict")
+        prices_raw = prices_path.read_bytes()
+        prices_lf = canonicalize_newlines_to_lf(prices_raw)
+        expected_prices_lf_sha256 = (
+            "b62efce80b6ef43a3ebe67085b1679c1b24c68ff65fd79fb50cbf15ec50402c5"
+        )
+        self.assertEqual(
+            hashlib.sha256(prices_lf).hexdigest(),
+            expected_prices_lf_sha256,
+        )
+        synthetic_crlf = prices_lf.replace(b"\n", b"\r\n")
+        self.assertEqual(
+            hashlib.sha256(canonicalize_newlines_to_lf(synthetic_crlf)).hexdigest(),
+            expected_prices_lf_sha256,
+        )
+        self.assertEqual(len(re.findall(r"(?m)^\s*title:", prices_source)), 5)
+        self.assertEqual(
+            len(re.findall(r"\{ name: '.*?', price: '.*?' \}", prices_source)),
+            180,
+        )
+
+        price = parse_repository_html("price.html")
+        self.assertEqual(price.titles, ["Прайс клініки — Bella Dent Clinic"])
+        self.assertEqual(price.canonicals, [f"{SITE_ROOT}price.html"])
+        self.assertEqual(price.json_ld_texts, [])
+        self.assertEqual(price.hrefs.count("/implantatsiia-zubiv.html"), 1)
+
+        public_records = []
+        for relative_path in self.manifest_entries:
+            if relative_path == "price.html":
+                continue
+            object_id = subprocess.run(
+                ["git", "hash-object", f"--path={relative_path}", relative_path],
+                cwd=REPOSITORY_ROOT,
+                check=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            ).stdout.strip()
+            public_records.append(f"{relative_path}\0{object_id}")
+        public_aggregate = hashlib.sha256("\n".join(public_records).encode("utf-8")).hexdigest()
+        self.assertEqual(len(public_records), 56)
+        self.assertEqual(
+            public_aggregate,
+            "bacf4f730427562d4f6ece2db17af7e2ec14d99205a67622b75e4ea2f8fa4360",
+        )
+        candidate_price_object = subprocess.run(
+            ["git", "hash-object", "--path=price.html", "price.html"],
+            cwd=REPOSITORY_ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+        ).stdout.strip()
+        self.assertEqual(candidate_price_object, "957d65949079bbc9b5a92207ab5179f82c151288")
+        self.assertNotEqual(
+            candidate_price_object,
+            "52db00f3a4b7e893ed477bd97c91084f8a590cba",
         )
 
     def test_contact_value_link_css_is_narrowly_scoped(self) -> None:
@@ -1174,6 +1276,98 @@ class RepositoryDoctorDomSecurityTests(unittest.TestCase):
             raise AssertionError("system Chrome is required for doctor DOM security regression tests")
 
     @classmethod
+    def _windows_test_owned_chrome_processes(
+        cls,
+        profile_path: Path,
+    ) -> list[dict[str, object]]:
+        if os.name != "nt":
+            return []
+
+        temp_root = Path(tempfile.gettempdir()).resolve()
+        test_root = profile_path.parent.resolve()
+        if test_root.parent != temp_root or not test_root.name.startswith("bella-doctor-browser-"):
+            raise AssertionError(f"refusing to inspect a non-test Chrome profile: {profile_path}")
+
+        powershell = shutil.which("powershell.exe") or shutil.which("powershell")
+        if powershell is None:
+            raise AssertionError("PowerShell is required for exact Windows Chrome cleanup")
+        script = r"""
+$chromeName = $env:BELLA_DOCTOR_CHROME_NAME
+$profilePath = $env:BELLA_DOCTOR_PROFILE_PATH
+$profileArgument = '--user-data-dir=' + $profilePath
+$filter = "Name = '$chromeName'"
+$matches = @(Get-CimInstance Win32_Process -Filter $filter | Where-Object {
+  $_.CommandLine -and
+  $_.CommandLine.IndexOf($profileArgument, [StringComparison]::OrdinalIgnoreCase) -ge 0 -and
+  $_.CommandLine.IndexOf('bella-doctor-browser-', [StringComparison]::OrdinalIgnoreCase) -ge 0
+} | Select-Object ProcessId, ParentProcessId, CommandLine)
+ConvertTo-Json -InputObject $matches -Compress
+"""
+        query_environment = os.environ.copy()
+        query_environment["BELLA_DOCTOR_CHROME_NAME"] = Path(cls.chrome).name
+        query_environment["BELLA_DOCTOR_PROFILE_PATH"] = str(profile_path)
+        completed = subprocess.run(
+            [
+                powershell,
+                "-NoProfile",
+                "-NonInteractive",
+                "-Command",
+                script,
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            env=query_environment,
+            timeout=15,
+        )
+        if completed.returncode != 0:
+            raise AssertionError(
+                f"could not inspect test-owned Chrome processes for {profile_path}: "
+                f"{completed.stderr.strip()}"
+            )
+        processes = json.loads(completed.stdout or "[]")
+        if isinstance(processes, dict):
+            processes = [processes]
+        for process in processes:
+            command_line = str(process.get("CommandLine") or "")
+            if (
+                "--user-data-dir=" not in command_line
+                or str(profile_path).casefold() not in command_line.casefold()
+                or "bella-doctor-browser-" not in command_line.casefold()
+            ):
+                raise AssertionError(f"refusing to terminate unproven Chrome process: {process}")
+        return processes
+
+    @classmethod
+    def _terminate_windows_test_owned_chrome(cls, profile_path: Path) -> None:
+        deadline = time.monotonic() + 15
+        observed_pids: set[int] = set()
+        while True:
+            processes = cls._windows_test_owned_chrome_processes(profile_path)
+            if not processes:
+                return
+            for process in processes:
+                process_id = int(process["ProcessId"])
+                observed_pids.add(process_id)
+                subprocess.run(
+                    ["taskkill.exe", "/PID", str(process_id), "/F"],
+                    check=False,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    timeout=10,
+                )
+            if time.monotonic() >= deadline:
+                remaining = cls._windows_test_owned_chrome_processes(profile_path)
+                remaining_pids = [int(process["ProcessId"]) for process in remaining]
+                raise AssertionError(
+                    f"test-owned Chrome processes did not exit for {profile_path}; "
+                    f"observed PIDs {sorted(observed_pids)}; remaining PIDs {remaining_pids}"
+                )
+            time.sleep(0.1)
+
+    @classmethod
     def browser_result(
         cls,
         doctors: list[dict[str, object]] | None = None,
@@ -1260,51 +1454,91 @@ setTimeout(function () {
             )
         )
 
-        with tempfile.TemporaryDirectory(prefix="bella-doctor-browser-") as temporary_directory:
-            temp_root = Path(temporary_directory)
-            harness_path = temp_root / "doctor-harness.html"
-            profile_path = temp_root / "chrome-profile"
-            stdout_path = temp_root / "chrome-stdout.txt"
+        temp_root = Path(tempfile.mkdtemp(prefix="bella-doctor-browser-"))
+        harness_path = temp_root / "doctor-harness.html"
+        profile_path = temp_root / "chrome-profile"
+        process: subprocess.Popen[bytes] | None = None
+        stdout_bytes = b""
+        timed_out = False
+        try:
             harness_path.write_text(harness, encoding="utf-8", newline="\n")
-            with stdout_path.open("wb") as stdout_file:
-                completed = subprocess.run(
-                    [
-                        cls.chrome,
-                        "--headless=new",
-                        "--disable-background-networking",
-                        "--disable-component-update",
-                        "--disable-default-apps",
-                        "--disable-extensions",
-                        "--disable-gpu",
-                        "--no-first-run",
-                        "--no-sandbox",
-                        "--allow-file-access-from-files",
-                        "--run-all-compositor-stages-before-draw",
-                        "--virtual-time-budget=1000",
-                        "--window-size=390,844",
-                        f"--user-data-dir={profile_path}",
-                        "--dump-dom",
-                        harness_path.as_uri(),
-                    ],
-                    stdout=stdout_file,
-                    stderr=subprocess.DEVNULL,
-                    timeout=60,
-                    check=False,
-                )
-            stdout = stdout_path.read_text(encoding="utf-8", errors="replace")
+            process = subprocess.Popen(
+                [
+                    cls.chrome,
+                    "--headless=new",
+                    "--disable-background-networking",
+                    "--disable-component-update",
+                    "--disable-default-apps",
+                    "--disable-extensions",
+                    "--disable-gpu",
+                    "--no-first-run",
+                    "--no-sandbox",
+                    "--allow-file-access-from-files",
+                    "--run-all-compositor-stages-before-draw",
+                    "--virtual-time-budget=1000",
+                    "--window-size=390,844",
+                    f"--user-data-dir={profile_path}",
+                    "--dump-dom",
+                    harness_path.as_uri(),
+                ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                start_new_session=os.name != "nt",
+            )
+            try:
+                stdout_bytes, _ = process.communicate(timeout=60)
+            except subprocess.TimeoutExpired:
+                timed_out = True
+        finally:
+            process_cleanup_error: AssertionError | None = None
+            if process is not None:
+                try:
+                    if os.name == "nt":
+                        cls._terminate_windows_test_owned_chrome(profile_path)
+                    else:
+                        try:
+                            os.killpg(process.pid, signal.SIGKILL)
+                        except ProcessLookupError:
+                            pass
+                except AssertionError as exc:
+                    process_cleanup_error = exc
+                if process.poll() is None:
+                    process.kill()
+                remaining_stdout, _ = process.communicate(timeout=15)
+                if not stdout_bytes:
+                    stdout_bytes = remaining_stdout
+
+            cleanup_error: PermissionError | None = None
             for attempt in range(100):
                 try:
-                    if stdout_path.exists():
-                        stdout_path.unlink()
                     if profile_path.exists():
                         shutil.rmtree(profile_path)
+                    cleanup_error = None
                     break
-                except PermissionError:
-                    if attempt == 99:
-                        raise AssertionError("Chrome did not release its temporary profile")
+                except PermissionError as exc:
+                    cleanup_error = exc
                     time.sleep(0.1)
-        if completed.returncode != 0:
-            raise AssertionError(f"Chrome DOM harness failed with {completed.returncode}")
+            if cleanup_error is not None:
+                remaining_pids = []
+                if os.name == "nt":
+                    remaining_pids = [
+                        int(process["ProcessId"])
+                        for process in cls._windows_test_owned_chrome_processes(profile_path)
+                    ]
+                raise AssertionError(
+                    f"Chrome did not release temporary profile {profile_path}; "
+                    f"remaining test-owned PIDs {remaining_pids}; last error: {cleanup_error}"
+                ) from cleanup_error
+            shutil.rmtree(temp_root)
+            if process_cleanup_error is not None:
+                raise process_cleanup_error
+
+        if timed_out:
+            raise AssertionError(f"Chrome DOM harness timed out for temporary profile {profile_path}")
+        if process is None or process.returncode != 0:
+            returncode = None if process is None else process.returncode
+            raise AssertionError(f"Chrome DOM harness failed with {returncode}")
+        stdout = stdout_bytes.decode("utf-8", errors="replace")
         match = re.search(r'<pre id="results">(.*?)</pre>', stdout, flags=re.DOTALL)
         if match is None or not match.group(1):
             raise AssertionError("Chrome DOM harness did not publish results")
