@@ -95,6 +95,48 @@ MAP_EMBED_URL = (
     "!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x40dae1c011d7f895:"
     "0x5bf876226c7311c0!2z0YPQuy4g0JLQsNGC0YPRgtC40L3QsCwgNDMvM9CQ!5e0!3m2!1sru!2sua!4v1234567890"
 )
+GALLERY_IMAGES = [
+    ("images/1779104568309443.jpg", 3024, 4032),
+    ("images/1779104635629528.jpg", 3024, 4032),
+    ("images/1779104606802140.jpg", 3024, 4032),
+    ("images/1779104570737709.jpg", 3024, 4032),
+    ("images/1779104566334594.jpg", 3024, 4032),
+    ("images/1779104583967888.jpg", 3024, 4032),
+    ("images/1779104673660235.jpg", 3024, 4032),
+    ("images/1779104670644090.jpg", 3024, 4032),
+    ("images/1779104592293313.jpg", 3024, 4032),
+    ("images/1779104572279425.jpg", 4284, 5712),
+    ("images/177910463479041.jpg", 4284, 5712),
+    ("images/1779104593232172.jpg", 3024, 4032),
+    ("images/1779104585368255.jpg", 4284, 5712),
+    ("images/1779104591598850.jpg", 4284, 5712),
+    ("images/1779104606802140.jpg", 3024, 4032),
+    ("images/1779104588550840.jpg", 3024, 4032),
+]
+CASE_IMAGES = [
+    ("cases/case-1.jpg", 1203, 380),
+    ("cases/case-2.jpg", 1203, 380),
+    ("cases/case-3.jpg", 1203, 380),
+    ("cases/case-4.jpg", 971, 380),
+    ("cases/case-5.jpg", 569, 380),
+    ("cases/case-6.jpg", 691, 380),
+    ("cases/case-7.jpg", 570, 380),
+    ("cases/case-8.jpg", 570, 380),
+    ("cases/case-9.jpg", 570, 380),
+]
+DOCTOR_IMAGE_DIMENSIONS = {
+    "doctors/oliynyk1.png": (1086, 1448),
+    "doctors/rybin2.png": (1086, 1448),
+    "doctors/sokolova.png": (1086, 1448),
+    "doctors/sidykh.png": (1086, 1448),
+    "doctors/levchenko.png": (1086, 1448),
+}
+CERTIFICATE_IMAGE_DIMENSIONS = {
+    "./certificates/cert-1.png": (1310, 950),
+    "./certificates/cert-2.png": (1217, 861),
+    **{f"./certificates/cert-{number}.png": (1233, 873) for number in range(3, 15)},
+    "./certificates/cert-15.png": (1074, 873),
+}
 
 
 def normalized_text(parts: list[str] | str) -> str:
@@ -117,6 +159,7 @@ class TechnicalSeoHTMLParser(HTMLParser):
         self.metas: list[dict[str, str | None]] = []
         self.anchors: list[dict[str, object]] = []
         self.iframes: list[dict[str, str | None]] = []
+        self.images: list[dict[str, object]] = []
         self.img_alts: list[str] = []
         self.json_ld_texts: list[str] = []
         self.titles: list[str] = []
@@ -132,9 +175,12 @@ class TechnicalSeoHTMLParser(HTMLParser):
         self._text_captures: list[tuple[str, list[str]]] = []
         self._current_row: list[str] | None = None
         self._in_body = False
+        self._noscript_depth = 0
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         attributes = dict(attrs)
+        if tag == "noscript":
+            self._noscript_depth += 1
         element_id = attributes.get("id")
         if element_id:
             self.ids.add(element_id)
@@ -154,6 +200,9 @@ class TechnicalSeoHTMLParser(HTMLParser):
         elif tag == "iframe":
             self.iframes.append(attributes)
         elif tag == "img":
+            self.images.append(
+                {"attributes": attributes, "noscript": self._noscript_depth > 0}
+            )
             self.img_alts.append(attributes.get("alt") or "")
         elif tag == "script" and attributes.get("type") == "application/ld+json":
             self._json_ld_parts = []
@@ -169,7 +218,9 @@ class TechnicalSeoHTMLParser(HTMLParser):
             self._in_body = True
 
     def handle_endtag(self, tag: str) -> None:
-        if tag == "a" and self._anchor_stack:
+        if tag == "noscript":
+            self._noscript_depth -= 1
+        elif tag == "a" and self._anchor_stack:
             self._anchor_stack.pop()
         elif tag == "script" and self._json_ld_parts is not None:
             self.json_ld_texts.append("".join(self._json_ld_parts))
@@ -985,7 +1036,7 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
         manifest_path = REPOSITORY_ROOT / "pages-public-manifest.txt"
         index = parse_repository_html("index.html")
 
-        self.assertEqual(index.img_alts.count("Клініка Ніка Дент"), 16)
+        self.assertEqual(index.img_alts.count("Клініка Ніка Дент"), 32)
         for path in (index_path, price_path):
             source = path.read_text(encoding="utf-8", errors="strict")
             self.assertNotIn("t.me/", source.casefold())
@@ -1014,6 +1065,183 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
             hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
             "2da6b3fc641a157c7adad068528232c2538c2de49888963ae4c634f80666dd3e",
         )
+
+    def test_homepage_static_image_delivery_contract_is_exact(self) -> None:
+        page = parse_repository_html("index.html")
+        source = (REPOSITORY_ROOT / "index.html").read_text(
+            encoding="utf-8",
+            errors="strict",
+        )
+
+        normal_images = [
+            image for image in page.images if not bool(image["noscript"])
+        ]
+        fallback_images = [
+            image for image in page.images if bool(image["noscript"])
+        ]
+
+        logo_images = [
+            image["attributes"]
+            for image in normal_images
+            if image["attributes"].get("src") == "images/bella-dent-mark.png.png"
+        ]
+        self.assertEqual(len(logo_images), 2)
+        self.assertEqual(
+            [image.get("class") for image in logo_images],
+            ["brand-mark", "footer-brand-mark"],
+        )
+        for image in logo_images:
+            self.assertEqual(image.get("alt"), "Bella Dent Clinic")
+            self.assertEqual((image.get("width"), image.get("height")), ("1074", "873"))
+            self.assertNotEqual(image.get("loading"), "lazy")
+            self.assertIsNone(image.get("data-src"))
+
+        gallery = [
+            image["attributes"]
+            for image in normal_images
+            if "about-slide" in (image["attributes"].get("class") or "").split()
+        ]
+        expected_gallery_paths = [path for path, _, _ in GALLERY_IMAGES]
+        self.assertEqual(len(gallery), 16)
+        self.assertEqual([image.get("data-src") for image in gallery], expected_gallery_paths)
+        self.assertTrue(all(image.get("src") is None for image in gallery))
+        self.assertEqual([image.get("alt") for image in gallery], ["Клініка Ніка Дент"] * 16)
+        self.assertEqual(
+            [(int(image["width"]), int(image["height"])) for image in gallery],
+            [(width, height) for _, width, height in GALLERY_IMAGES],
+        )
+        self.assertTrue(all(image.get("loading") == "lazy" for image in gallery))
+        self.assertTrue(all(image.get("decoding") == "async" for image in gallery))
+        self.assertEqual(len(set(expected_gallery_paths)), 15)
+        self.assertEqual(expected_gallery_paths.count("images/1779104606802140.jpg"), 2)
+
+        fallback_gallery = [
+            image["attributes"]
+            for image in fallback_images
+            if "about-slide" in (image["attributes"].get("class") or "").split()
+        ]
+        self.assertEqual(len(fallback_gallery), 16)
+        self.assertEqual([image.get("src") for image in fallback_gallery], expected_gallery_paths)
+        self.assertEqual([image.get("alt") for image in fallback_gallery], ["Клініка Ніка Дент"] * 16)
+        self.assertEqual(
+            [(int(image["width"]), int(image["height"])) for image in fallback_gallery],
+            [(width, height) for _, width, height in GALLERY_IMAGES],
+        )
+        self.assertTrue(all(image.get("data-src") is None for image in fallback_gallery))
+
+        cases = [
+            image["attributes"]
+            for image in normal_images
+            if (image["attributes"].get("src") or "").startswith("cases/case-")
+        ]
+        self.assertEqual(len(cases), 9)
+        self.assertEqual([image.get("src") for image in cases], [path for path, _, _ in CASE_IMAGES])
+        self.assertEqual([image.get("alt") for image in cases], [f"Кейс {number}" for number in range(1, 10)])
+        self.assertEqual(
+            [(int(image["width"]), int(image["height"])) for image in cases],
+            [(width, height) for _, width, height in CASE_IMAGES],
+        )
+        self.assertTrue(all(image.get("loading") == "lazy" for image in cases))
+        self.assertTrue(all(image.get("decoding") == "async" for image in cases))
+
+        self.assertEqual(source.count("image.src = image.dataset.src;"), 1)
+        self.assertIn("new IntersectionObserver", source)
+        self.assertIn("document.addEventListener('DOMContentLoaded', observeGallery, { once: true });", source)
+        self.assertIn("{ rootMargin: '500px 0px' }", source)
+        self.assertIn("function loadSlide(index)", source)
+        self.assertIn("function loadAdjacent(index)", source)
+        self.assertNotIn("slides.forEach(function(image) { image.src", source)
+
+    def test_dynamic_doctor_and_certificate_dimensions_are_exact(self) -> None:
+        source = (REPOSITORY_ROOT / "index.html").read_text(
+            encoding="utf-8",
+            errors="strict",
+        )
+        doctor_block = source[
+            source.index("var DOCTOR_PHOTO_DIMENSIONS") : source.index("var PLACEHOLDER_SVG")
+        ]
+        doctor_dimensions = {
+            path: (int(width), int(height))
+            for path, width, height in re.findall(
+                r"'(doctors/[^']+)': \[(\d+), (\d+)\]",
+                doctor_block,
+            )
+        }
+        self.assertEqual(doctor_dimensions, DOCTOR_IMAGE_DIMENSIONS)
+        render_block = source[source.index("function renderDoctors") : source.index("})();", source.index("function renderDoctors"))]
+        self.assertIn("img.loading = 'lazy';", render_block)
+        self.assertIn("img.decoding = 'async';", render_block)
+        self.assertIn("img.width = dimensions[0];", render_block)
+        self.assertIn("img.height = dimensions[1];", render_block)
+        self.assertIn("img.onerror = function () { photoDiv.innerHTML = PLACEHOLDER_SVG; };", render_block)
+        self.assertIn("nameDiv.textContent = d.name;", render_block)
+        self.assertIn("roleDiv.textContent = d.role;", render_block)
+
+        certificate_block = source[
+            source.index("var CERTIFICATE_DIMENSIONS") : source.index("var track", source.index("var CERTIFICATE_DIMENSIONS"))
+        ]
+        certificate_dimensions = {
+            path: (int(width), int(height))
+            for path, width, height in re.findall(
+                r"'(\./certificates/[^']+)': \[(\d+), (\d+)\]",
+                certificate_block,
+            )
+        }
+        self.assertEqual(certificate_dimensions, CERTIFICATE_IMAGE_DIMENSIONS)
+        make_slide_block = source[source.index("function makeSlide") : source.index("function rebuildSizes")]
+        self.assertIn("img.setAttribute('loading', 'lazy');", make_slide_block)
+        self.assertIn("img.setAttribute('decoding', 'async');", make_slide_block)
+        self.assertIn("img.setAttribute('width', String(dimensions[0]));", make_slide_block)
+        self.assertIn("img.setAttribute('height', String(dimensions[1]));", make_slide_block)
+        self.assertLess(make_slide_block.index("img.setAttribute('width'"), make_slide_block.index("img.src = src;"))
+
+    def test_homepage_performance_pr_preserves_assets_and_repository_boundary(self) -> None:
+        image_extensions = {".avif", ".gif", ".jpg", ".jpeg", ".png", ".svg", ".webp"}
+        image_paths = sorted(
+            path
+            for path in self.manifest_entries
+            if Path(path).suffix.casefold() in image_extensions
+        )
+        image_records = [
+            f"{path}\0{hashlib.sha256((REPOSITORY_ROOT / path).read_bytes()).hexdigest()}"
+            for path in image_paths
+        ]
+        self.assertEqual(len(image_paths), 45)
+        self.assertEqual(sum((REPOSITORY_ROOT / path).stat().st_size for path in image_paths), 65_170_885)
+        self.assertEqual(
+            hashlib.sha256("\n".join(image_records).encode("utf-8")).hexdigest(),
+            "d875fc137cb3c6bc776caae6a3641d81710a80291f449927fd4516d642e43bd1",
+        )
+
+        tracked_output = subprocess.run(
+            ["git", "ls-files", "-z"],
+            cwd=REPOSITORY_ROOT,
+            check=True,
+            capture_output=True,
+        ).stdout.decode("utf-8", errors="strict")
+        tracked_paths = [path for path in tracked_output.split("\0") if path]
+        allowed_paths = {"index.html", "tests/test_pages_artifact_isolation.py"}
+        protected_records = []
+        for path in tracked_paths:
+            if path in allowed_paths:
+                continue
+            object_id = subprocess.run(
+                ["git", "hash-object", f"--path={path}", path],
+                cwd=REPOSITORY_ROOT,
+                check=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            ).stdout.strip()
+            protected_records.append(f"{path}\0{object_id}")
+        self.assertEqual(len(protected_records), 175)
+        self.assertEqual(
+            hashlib.sha256("\n".join(protected_records).encode("utf-8")).hexdigest(),
+            "6c101e39386dce22d7f0ddd712bf2f849d30ba62e46e6ca59156338fecf42948",
+        )
+
+        self.assertNotIn("llms.txt", self.manifest_entries)
+        self.assertFalse(any(path.startswith(".seo/") for path in self.manifest_entries))
 
     def test_price_hero_stale_reference_is_absent_from_public_code(self) -> None:
         stale_filename = "фото для прайса.jpg"
@@ -1089,7 +1317,7 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
 
         public_records = []
         for relative_path in self.manifest_entries:
-            if relative_path == "price.html":
+            if relative_path in {"index.html", "price.html"}:
                 continue
             object_id = subprocess.run(
                 ["git", "hash-object", f"--path={relative_path}", relative_path],
@@ -1101,10 +1329,10 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
             ).stdout.strip()
             public_records.append(f"{relative_path}\0{object_id}")
         public_aggregate = hashlib.sha256("\n".join(public_records).encode("utf-8")).hexdigest()
-        self.assertEqual(len(public_records), 56)
+        self.assertEqual(len(public_records), 55)
         self.assertEqual(
             public_aggregate,
-            "bacf4f730427562d4f6ece2db17af7e2ec14d99205a67622b75e4ea2f8fa4360",
+            "b8f8bf9c151a8689f39aa2127751802fdbccb67bb6e723e2878f013eae1beb84",
         )
         candidate_price_object = subprocess.run(
             ["git", "hash-object", "--path=price.html", "price.html"],
@@ -1415,6 +1643,10 @@ setTimeout(function () {
       role: card.querySelector('.doctor-role').textContent,
       photo: image ? image.getAttribute('src') : null,
       alt: image ? image.getAttribute('alt') : null,
+      loading: image ? image.getAttribute('loading') : null,
+      decoding: image ? image.getAttribute('decoding') : null,
+      width: image ? image.getAttribute('width') : null,
+      height: image ? image.getAttribute('height') : null,
       plusCount: card.querySelectorAll('.doctor-plus').length
     };
   });
@@ -1611,6 +1843,10 @@ setTimeout(function () {
             [card["alt"] for card in first["cards"]],
             [doctor["name"] for doctor in doctors],
         )
+        self.assertEqual([card["loading"] for card in first["cards"]], ["lazy", "lazy"])
+        self.assertEqual([card["decoding"] for card in first["cards"]], ["async", "async"])
+        self.assertEqual([card["width"] for card in first["cards"]], ["1086", "1086"])
+        self.assertEqual([card["height"] for card in first["cards"]], ["1448", "1448"])
         self.assertEqual([card["plusCount"] for card in first["cards"]], [1, 0])
         self.assertEqual(first["cards"][1:], second["cards"][1:])
         self.assertEqual(second["cards"][0]["name"], changed[0]["name"])
@@ -1643,6 +1879,10 @@ setTimeout(function () {
             self.assertEqual([card["plusCount"] for card in result["cards"]], [1, 1, 0, 0, 0])
             self.assertEqual([card["alt"] for card in result["cards"]], expected_names)
             self.assertTrue(all(card["photo"] for card in result["cards"]))
+            self.assertTrue(all(card["loading"] == "lazy" for card in result["cards"]))
+            self.assertTrue(all(card["decoding"] == "async" for card in result["cards"]))
+            self.assertTrue(all(card["width"] == "1086" for card in result["cards"]))
+            self.assertTrue(all(card["height"] == "1448" for card in result["cards"]))
             self.assertTrue(result["layoutContained"])
             self.assertFalse(result["horizontalOverflow"])
             self.assertEqual(result["errors"], [])
