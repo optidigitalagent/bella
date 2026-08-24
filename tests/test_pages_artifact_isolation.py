@@ -13,6 +13,7 @@ import shutil
 import signal
 import subprocess
 import tempfile
+import threading
 import time
 import unittest
 from urllib.parse import quote, urlsplit
@@ -49,6 +50,15 @@ EXPECTED_SITEMAP_LOCS = [
 ]
 SITE_ROOT = "https://belladentclinik.kr.ua/"
 LOGO_URL = f"{SITE_ROOT}images/bella-dent-mark.png.png"
+HOMEPAGE_TITLE = "Стоматологія у Кривому Розі — Bella Dent Clinic"
+HOMEPAGE_DESCRIPTION = (
+    "Bella Dent Clinic — стоматологія у Кривому Розі. Лікування, хірургія, "
+    "протезування, ортодонтія, імплантація, прайс і запис на консультацію."
+)
+HOMEPAGE_HERO_LOCAL_INTENT = (
+    "Стоматологія у Кривому Розі — послуги, лікарі, прайс і запис на консультацію."
+)
+HOMEPAGE_SERVICES_HEADING = "Стоматологічні послуги у Кривому Розі"
 IMPLANTATION_PAGE = "implantatsiia-zubiv.html"
 IMPLANTATION_TITLE = "Імплантація зубів у Кривому Розі — Bella Dent Clinic"
 IMPLANTATION_CANONICAL = f"{SITE_ROOT}{IMPLANTATION_PAGE}"
@@ -614,15 +624,17 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
     def tearDownClass(cls) -> None:
         cls.temporary_directory.cleanup()
 
-    def test_page_identity_metadata_is_exact_and_description_free(self) -> None:
+    def test_page_identity_metadata_and_description_contracts_are_exact(self) -> None:
         page_contracts = {
             "index.html": {
-                "title": "Bella Dent Clinic — Центр сучасної стоматології",
+                "title": HOMEPAGE_TITLE,
                 "canonical": SITE_ROOT,
+                "description": HOMEPAGE_DESCRIPTION,
             },
             "price.html": {
                 "title": "Прайс клініки — Bella Dent Clinic",
                 "canonical": f"{SITE_ROOT}price.html",
+                "description": None,
             },
         }
         common_properties = {
@@ -675,14 +687,111 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
                         ]
                         self.assertEqual(matches, [value], f"{relative_path}: {key}")
 
+                descriptions = [
+                    meta.get("content")
+                    for meta in parsed.metas
+                    if (meta.get("name") or "").casefold() == "description"
+                ]
+                expected_descriptions = (
+                    [contract["description"]] if contract["description"] else []
+                )
+                self.assertEqual(descriptions, expected_descriptions)
                 self.assertFalse(
                     any(
-                        (meta.get("name") or "").casefold() == "description"
-                        or meta.get("property") == "og:description"
+                        meta.get("property") == "og:description"
                         or meta.get("name") == "twitter:description"
                         for meta in parsed.metas
                     )
                 )
+
+    def test_homepage_local_intent_copy_is_exact_visible_and_not_stuffed(self) -> None:
+        source = (REPOSITORY_ROOT / "index.html").read_text(
+            encoding="utf-8",
+            errors="strict",
+        )
+        parsed = parse_repository_html("index.html")
+        visible = normalized_text(parsed.body_text)
+
+        self.assertEqual(parsed.h1_texts, ["BELLA DENT CLINIC"])
+        self.assertEqual(
+            source.count(f'<p class="hero-subtitle">{HOMEPAGE_HERO_LOCAL_INTENT}</p>'),
+            1,
+        )
+        self.assertEqual(visible.count(HOMEPAGE_HERO_LOCAL_INTENT), 1)
+        self.assertEqual(
+            source.count(f'<h2 class="section-heading">{HOMEPAGE_SERVICES_HEADING}</h2>'),
+            1,
+        )
+        self.assertEqual(parsed.h2_texts.count(HOMEPAGE_SERVICES_HEADING), 1)
+        self.assertNotIn("Комплексна турбота про вашу усмішку", visible)
+
+        core_phrase = "стоматологія у кривому розі"
+        self.assertEqual(visible.casefold().count(core_phrase), 1)
+        for russian_copy in (
+            "стоматология",
+            "стоматологическая клиника",
+            "стоматолог в кривом роге",
+            "кривой рог",
+        ):
+            self.assertNotIn(russian_copy, visible.casefold())
+        for hidden_seo_marker in (
+            "bot-only",
+            "ai-only",
+            "hidden-ai",
+            "seo-only",
+            "seo-hidden",
+            "keyword-list",
+        ):
+            self.assertNotIn(hidden_seo_marker, source.casefold())
+
+    def test_homepage_service_card_order_and_destinations_are_exact(self) -> None:
+        price_source = (REPOSITORY_ROOT / "prices.js").read_text(
+            encoding="utf-8",
+            errors="strict",
+        )
+        home_source = (REPOSITORY_ROOT / "index.html").read_text(
+            encoding="utf-8",
+            errors="strict",
+        )
+        categories = re.findall(
+            r"(?m)^    title: '([^']+)',\n    slug: '([^']+)',",
+            price_source,
+        )
+        self.assertEqual(
+            categories,
+            [
+                ("Терапевтична стоматологія", "terapiia"),
+                ("Хірургічна стоматологія", "khirurhiia"),
+                ("Ортопедія", "ortopediia"),
+                ("Ортодонтія", "ortodontiia"),
+                ("Імплантологія", "implantolohiia"),
+            ],
+        )
+        expected_destinations = [
+            "price.html#terapiia",
+            "price.html#khirurhiia",
+            "price.html#ortopediia",
+            "price.html#ortodontiia",
+            "implantatsiia-zubiv.html",
+        ]
+        actual_destinations = [
+            "implantatsiia-zubiv.html"
+            if slug == "implantolohiia"
+            else f"price.html#{slug}"
+            for _, slug in categories
+        ]
+        self.assertEqual(actual_destinations, expected_destinations)
+        self.assertEqual(
+            home_source.count(
+                "a.href = cat.slug === 'implantolohiia' ? "
+                "'implantatsiia-zubiv.html' : 'price.html#' + cat.slug;"
+            ),
+            1,
+        )
+        self.assertEqual(
+            home_source.count('<div class="services-grid" id="price-categories-grid"></div>'),
+            1,
+        )
 
     def test_implantation_page_head_contract_is_exact(self) -> None:
         source = (REPOSITORY_ROOT / IMPLANTATION_PAGE).read_text(encoding="utf-8", errors="strict")
@@ -1521,18 +1630,24 @@ class RepositoryDoctorDomSecurityTests(unittest.TestCase):
             raise AssertionError("PowerShell is required for exact Windows Chrome cleanup")
         script = r"""
 $chromeName = $env:BELLA_DOCTOR_CHROME_NAME
+$chromePath = $env:BELLA_DOCTOR_CHROME_PATH
 $profilePath = $env:BELLA_DOCTOR_PROFILE_PATH
 $profileArgument = '--user-data-dir=' + $profilePath
+$quotedProfileArgument = '--user-data-dir="' + $profilePath + '"'
 $filter = "Name = '$chromeName'"
 $matches = @(Get-CimInstance Win32_Process -Filter $filter | Where-Object {
+  $_.ExecutablePath -and
+  $_.ExecutablePath.Equals($chromePath, [StringComparison]::OrdinalIgnoreCase) -and
   $_.CommandLine -and
-  $_.CommandLine.IndexOf($profileArgument, [StringComparison]::OrdinalIgnoreCase) -ge 0 -and
+  ($_.CommandLine.IndexOf($profileArgument, [StringComparison]::OrdinalIgnoreCase) -ge 0 -or
+   $_.CommandLine.IndexOf($quotedProfileArgument, [StringComparison]::OrdinalIgnoreCase) -ge 0) -and
   $_.CommandLine.IndexOf('bella-doctor-browser-', [StringComparison]::OrdinalIgnoreCase) -ge 0
-} | Select-Object ProcessId, ParentProcessId, CommandLine)
+} | Select-Object ProcessId, ParentProcessId, ExecutablePath, CommandLine)
 ConvertTo-Json -InputObject $matches -Compress
 """
         query_environment = os.environ.copy()
         query_environment["BELLA_DOCTOR_CHROME_NAME"] = Path(cls.chrome).name
+        query_environment["BELLA_DOCTOR_CHROME_PATH"] = str(Path(cls.chrome).resolve())
         query_environment["BELLA_DOCTOR_PROFILE_PATH"] = str(profile_path)
         completed = subprocess.run(
             [
@@ -1558,11 +1673,20 @@ ConvertTo-Json -InputObject $matches -Compress
         processes = json.loads(completed.stdout or "[]")
         if isinstance(processes, dict):
             processes = [processes]
+        expected_chrome = os.path.normcase(os.path.realpath(cls.chrome))
+        expected_profile_arguments = (
+            f"--user-data-dir={profile_path}",
+            f'--user-data-dir="{profile_path}"',
+        )
         for process in processes:
+            executable_path = str(process.get("ExecutablePath") or "")
             command_line = str(process.get("CommandLine") or "")
             if (
-                "--user-data-dir=" not in command_line
-                or str(profile_path).casefold() not in command_line.casefold()
+                os.path.normcase(os.path.realpath(executable_path)) != expected_chrome
+                or not any(
+                    argument.casefold() in command_line.casefold()
+                    for argument in expected_profile_arguments
+                )
                 or "bella-doctor-browser-" not in command_line.casefold()
             ):
                 raise AssertionError(f"refusing to terminate unproven Chrome process: {process}")
@@ -1572,26 +1696,48 @@ ConvertTo-Json -InputObject $matches -Compress
     def _terminate_windows_test_owned_chrome(cls, profile_path: Path) -> None:
         deadline = time.monotonic() + 15
         observed_pids: set[int] = set()
+        quiet_since: float | None = None
+        kill_errors: list[str] = []
         while True:
             processes = cls._windows_test_owned_chrome_processes(profile_path)
             if not processes:
-                return
-            for process in processes:
-                process_id = int(process["ProcessId"])
-                observed_pids.add(process_id)
-                subprocess.run(
-                    ["taskkill.exe", "/PID", str(process_id), "/F"],
-                    check=False,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    timeout=10,
+                if quiet_since is None:
+                    quiet_since = time.monotonic()
+                elif time.monotonic() - quiet_since >= 0.5:
+                    return
+                if time.monotonic() >= deadline:
+                    return
+                time.sleep(0.1)
+                continue
+            quiet_since = None
+            process_ids = sorted(int(process["ProcessId"]) for process in processes)
+            observed_pids.update(process_ids)
+            taskkill_command = ["taskkill.exe"]
+            for process_id in process_ids:
+                taskkill_command.extend(("/PID", str(process_id)))
+            taskkill_command.append("/F")
+            completed = subprocess.run(
+                taskkill_command,
+                check=False,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=10,
+            )
+            if completed.returncode != 0:
+                kill_errors.append(
+                    f"PIDs {process_ids}: {completed.stderr.strip() or completed.stdout.strip()}"
                 )
             if time.monotonic() >= deadline:
                 remaining = cls._windows_test_owned_chrome_processes(profile_path)
                 remaining_pids = [int(process["ProcessId"]) for process in remaining]
+                if not remaining_pids:
+                    return
                 raise AssertionError(
                     f"test-owned Chrome processes did not exit for {profile_path}; "
-                    f"observed PIDs {sorted(observed_pids)}; remaining PIDs {remaining_pids}"
+                    f"observed PIDs {sorted(observed_pids)}; remaining PIDs {remaining_pids}; "
+                    f"taskkill errors {kill_errors}"
                 )
             time.sleep(0.1)
 
@@ -1690,8 +1836,14 @@ setTimeout(function () {
         harness_path = temp_root / "doctor-harness.html"
         profile_path = temp_root / "chrome-profile"
         process: subprocess.Popen[bytes] | None = None
-        stdout_bytes = b""
-        timed_out = False
+        stdout_chunks: list[bytes] = []
+        result_ready = threading.Event()
+        reader_done = threading.Event()
+        result_value: list[dict[str, object]] = []
+        result_parse_error: list[BaseException] = []
+        reader_error: list[BaseException] = []
+        reader: threading.Thread | None = None
+        result_timed_out = False
         try:
             harness_path.write_text(harness, encoding="utf-8", newline="\n")
             process = subprocess.Popen(
@@ -1717,10 +1869,47 @@ setTimeout(function () {
                 stderr=subprocess.DEVNULL,
                 start_new_session=os.name != "nt",
             )
-            try:
-                stdout_bytes, _ = process.communicate(timeout=60)
-            except subprocess.TimeoutExpired:
-                timed_out = True
+
+            if process.stdout is None:
+                raise AssertionError("Chrome DOM harness stdout pipe was not created")
+
+            def read_browser_stdout() -> None:
+                try:
+                    while True:
+                        chunk = process.stdout.read1(4096)
+                        if not chunk:
+                            break
+                        stdout_chunks.append(chunk)
+                        stdout = b"".join(stdout_chunks).decode("utf-8", errors="replace")
+                        match = re.search(r'<pre id="results">(.*?)</pre>', stdout, flags=re.DOTALL)
+                        if match is None or not match.group(1):
+                            continue
+                        try:
+                            parsed = json.loads(unescape(match.group(1)))
+                        except (json.JSONDecodeError, TypeError) as exc:
+                            result_parse_error.append(exc)
+                        else:
+                            if not isinstance(parsed, dict):
+                                result_parse_error.append(
+                                    TypeError(f"Chrome DOM harness published {type(parsed).__name__}, not an object")
+                                )
+                            else:
+                                result_value.append(parsed)
+                        result_ready.set()
+                        break
+                except BaseException as exc:
+                    reader_error.append(exc)
+                    result_ready.set()
+                finally:
+                    reader_done.set()
+
+            reader = threading.Thread(
+                target=read_browser_stdout,
+                name=f"bella-doctor-browser-stdout-{process.pid}",
+                daemon=True,
+            )
+            reader.start()
+            result_timed_out = not result_ready.wait(timeout=15)
         finally:
             process_cleanup_error: AssertionError | None = None
             if process is not None:
@@ -1736,15 +1925,30 @@ setTimeout(function () {
                     process_cleanup_error = exc
                 if process.poll() is None:
                     process.kill()
-                remaining_stdout, _ = process.communicate(timeout=15)
-                if not stdout_bytes:
-                    stdout_bytes = remaining_stdout
+                try:
+                    process.wait(timeout=15)
+                except subprocess.TimeoutExpired as exc:
+                    process_cleanup_error = AssertionError(
+                        f"Chrome parent PID {process.pid} did not exit for {profile_path}"
+                    )
+                    process.kill()
+                    process.wait(timeout=5)
+
+            if reader is not None:
+                reader_done.wait(timeout=15)
+                reader.join(timeout=0)
+                if reader.is_alive() and process_cleanup_error is None:
+                    process_cleanup_error = AssertionError(
+                        f"Chrome stdout reader did not exit for {profile_path}"
+                    )
+            if process is not None and process.stdout is not None:
+                process.stdout.close()
 
             cleanup_error: PermissionError | None = None
             for attempt in range(100):
                 try:
-                    if profile_path.exists():
-                        shutil.rmtree(profile_path)
+                    if temp_root.exists():
+                        shutil.rmtree(temp_root)
                     cleanup_error = None
                     break
                 except PermissionError as exc:
@@ -1761,20 +1965,28 @@ setTimeout(function () {
                     f"Chrome did not release temporary profile {profile_path}; "
                     f"remaining test-owned PIDs {remaining_pids}; last error: {cleanup_error}"
                 ) from cleanup_error
-            shutil.rmtree(temp_root)
             if process_cleanup_error is not None:
                 raise process_cleanup_error
 
-        if timed_out:
-            raise AssertionError(f"Chrome DOM harness timed out for temporary profile {profile_path}")
-        if process is None or process.returncode != 0:
+        if reader_error:
+            raise AssertionError(
+                f"Chrome DOM harness stdout reader failed for {profile_path}: {reader_error[0]}"
+            ) from reader_error[0]
+        if result_timed_out:
+            raise AssertionError(
+                f"Chrome DOM harness result timed out for temporary profile {profile_path}; "
+                f"captured {sum(len(chunk) for chunk in stdout_chunks)} stdout bytes"
+            )
+        if result_parse_error:
+            raise AssertionError(
+                f"Chrome DOM harness published invalid results for {profile_path}: {result_parse_error[0]}"
+            ) from result_parse_error[0]
+        if not result_value:
             returncode = None if process is None else process.returncode
-            raise AssertionError(f"Chrome DOM harness failed with {returncode}")
-        stdout = stdout_bytes.decode("utf-8", errors="replace")
-        match = re.search(r'<pre id="results">(.*?)</pre>', stdout, flags=re.DOTALL)
-        if match is None or not match.group(1):
-            raise AssertionError("Chrome DOM harness did not publish results")
-        return json.loads(unescape(match.group(1)))
+            raise AssertionError(
+                f"Chrome DOM harness did not publish results for {profile_path}; Chrome returned {returncode}"
+            )
+        return result_value[0]
 
     def test_sheet_fed_text_uses_safe_dom_construction_only(self) -> None:
         render_block = self.doctor_script[self.doctor_script.index("function renderDoctors") :]
