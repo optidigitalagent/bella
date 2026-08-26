@@ -13,6 +13,7 @@ import shutil
 import signal
 import subprocess
 import tempfile
+import threading
 import time
 import unittest
 from urllib.parse import quote, urlsplit
@@ -49,6 +50,15 @@ EXPECTED_SITEMAP_LOCS = [
 ]
 SITE_ROOT = "https://belladentclinik.kr.ua/"
 LOGO_URL = f"{SITE_ROOT}images/bella-dent-mark.png.png"
+HOMEPAGE_TITLE = "Стоматологія у Кривому Розі — Bella Dent Clinic"
+HOMEPAGE_DESCRIPTION = (
+    "Bella Dent Clinic — стоматологія у Кривому Розі. Лікування, хірургія, "
+    "протезування, ортодонтія, імплантація, прайс і запис на консультацію."
+)
+HOMEPAGE_HERO_LOCAL_INTENT = (
+    "Стоматологія у Кривому Розі — послуги, лікарі, прайс і запис на консультацію."
+)
+HOMEPAGE_SERVICES_HEADING = "Стоматологічні послуги у Кривому Розі"
 IMPLANTATION_PAGE = "implantatsiia-zubiv.html"
 IMPLANTATION_TITLE = "Імплантація зубів у Кривому Розі — Bella Dent Clinic"
 IMPLANTATION_CANONICAL = f"{SITE_ROOT}{IMPLANTATION_PAGE}"
@@ -614,15 +624,17 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
     def tearDownClass(cls) -> None:
         cls.temporary_directory.cleanup()
 
-    def test_page_identity_metadata_is_exact_and_description_free(self) -> None:
+    def test_page_identity_metadata_and_description_contracts_are_exact(self) -> None:
         page_contracts = {
             "index.html": {
-                "title": "Bella Dent Clinic — Центр сучасної стоматології",
+                "title": HOMEPAGE_TITLE,
                 "canonical": SITE_ROOT,
+                "description": HOMEPAGE_DESCRIPTION,
             },
             "price.html": {
                 "title": "Прайс клініки — Bella Dent Clinic",
                 "canonical": f"{SITE_ROOT}price.html",
+                "description": None,
             },
         }
         common_properties = {
@@ -675,14 +687,111 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
                         ]
                         self.assertEqual(matches, [value], f"{relative_path}: {key}")
 
+                descriptions = [
+                    meta.get("content")
+                    for meta in parsed.metas
+                    if (meta.get("name") or "").casefold() == "description"
+                ]
+                expected_descriptions = (
+                    [contract["description"]] if contract["description"] else []
+                )
+                self.assertEqual(descriptions, expected_descriptions)
                 self.assertFalse(
                     any(
-                        (meta.get("name") or "").casefold() == "description"
-                        or meta.get("property") == "og:description"
+                        meta.get("property") == "og:description"
                         or meta.get("name") == "twitter:description"
                         for meta in parsed.metas
                     )
                 )
+
+    def test_homepage_local_intent_copy_is_exact_visible_and_not_stuffed(self) -> None:
+        source = (REPOSITORY_ROOT / "index.html").read_text(
+            encoding="utf-8",
+            errors="strict",
+        )
+        parsed = parse_repository_html("index.html")
+        visible = normalized_text(parsed.body_text)
+
+        self.assertEqual(parsed.h1_texts, ["BELLA DENT CLINIC"])
+        self.assertEqual(
+            source.count(f'<p class="hero-subtitle">{HOMEPAGE_HERO_LOCAL_INTENT}</p>'),
+            1,
+        )
+        self.assertEqual(visible.count(HOMEPAGE_HERO_LOCAL_INTENT), 1)
+        self.assertEqual(
+            source.count(f'<h2 class="section-heading">{HOMEPAGE_SERVICES_HEADING}</h2>'),
+            1,
+        )
+        self.assertEqual(parsed.h2_texts.count(HOMEPAGE_SERVICES_HEADING), 1)
+        self.assertNotIn("Комплексна турбота про вашу усмішку", visible)
+
+        core_phrase = "стоматологія у кривому розі"
+        self.assertEqual(visible.casefold().count(core_phrase), 1)
+        for russian_copy in (
+            "стоматология",
+            "стоматологическая клиника",
+            "стоматолог в кривом роге",
+            "кривой рог",
+        ):
+            self.assertNotIn(russian_copy, visible.casefold())
+        for hidden_seo_marker in (
+            "bot-only",
+            "ai-only",
+            "hidden-ai",
+            "seo-only",
+            "seo-hidden",
+            "keyword-list",
+        ):
+            self.assertNotIn(hidden_seo_marker, source.casefold())
+
+    def test_homepage_service_card_order_and_destinations_are_exact(self) -> None:
+        price_source = (REPOSITORY_ROOT / "prices.js").read_text(
+            encoding="utf-8",
+            errors="strict",
+        )
+        home_source = (REPOSITORY_ROOT / "index.html").read_text(
+            encoding="utf-8",
+            errors="strict",
+        )
+        categories = re.findall(
+            r"(?m)^    title: '([^']+)',\n    slug: '([^']+)',",
+            price_source,
+        )
+        self.assertEqual(
+            categories,
+            [
+                ("Терапевтична стоматологія", "terapiia"),
+                ("Хірургічна стоматологія", "khirurhiia"),
+                ("Ортопедія", "ortopediia"),
+                ("Ортодонтія", "ortodontiia"),
+                ("Імплантологія", "implantolohiia"),
+            ],
+        )
+        expected_destinations = [
+            "price.html#terapiia",
+            "price.html#khirurhiia",
+            "price.html#ortopediia",
+            "price.html#ortodontiia",
+            "implantatsiia-zubiv.html",
+        ]
+        actual_destinations = [
+            "implantatsiia-zubiv.html"
+            if slug == "implantolohiia"
+            else f"price.html#{slug}"
+            for _, slug in categories
+        ]
+        self.assertEqual(actual_destinations, expected_destinations)
+        self.assertEqual(
+            home_source.count(
+                "a.href = cat.slug === 'implantolohiia' ? "
+                "'implantatsiia-zubiv.html' : 'price.html#' + cat.slug;"
+            ),
+            1,
+        )
+        self.assertEqual(
+            home_source.count('<div class="services-grid" id="price-categories-grid"></div>'),
+            1,
+        )
 
     def test_implantation_page_head_contract_is_exact(self) -> None:
         source = (REPOSITORY_ROOT / IMPLANTATION_PAGE).read_text(encoding="utf-8", errors="strict")
@@ -1504,94 +1613,328 @@ class RepositoryDoctorDomSecurityTests(unittest.TestCase):
             raise AssertionError("system Chrome is required for doctor DOM security regression tests")
 
     @classmethod
-    def _windows_test_owned_chrome_processes(
+    def _validate_test_owned_chrome_launch(
         cls,
+        temp_root: Path,
         profile_path: Path,
-    ) -> list[dict[str, object]]:
-        if os.name != "nt":
-            return []
-
-        temp_root = Path(tempfile.gettempdir()).resolve()
-        test_root = profile_path.parent.resolve()
-        if test_root.parent != temp_root or not test_root.name.startswith("bella-doctor-browser-"):
-            raise AssertionError(f"refusing to inspect a non-test Chrome profile: {profile_path}")
-
-        powershell = shutil.which("powershell.exe") or shutil.which("powershell")
-        if powershell is None:
-            raise AssertionError("PowerShell is required for exact Windows Chrome cleanup")
-        script = r"""
-$chromeName = $env:BELLA_DOCTOR_CHROME_NAME
-$profilePath = $env:BELLA_DOCTOR_PROFILE_PATH
-$profileArgument = '--user-data-dir=' + $profilePath
-$filter = "Name = '$chromeName'"
-$matches = @(Get-CimInstance Win32_Process -Filter $filter | Where-Object {
-  $_.CommandLine -and
-  $_.CommandLine.IndexOf($profileArgument, [StringComparison]::OrdinalIgnoreCase) -ge 0 -and
-  $_.CommandLine.IndexOf('bella-doctor-browser-', [StringComparison]::OrdinalIgnoreCase) -ge 0
-} | Select-Object ProcessId, ParentProcessId, CommandLine)
-ConvertTo-Json -InputObject $matches -Compress
-"""
-        query_environment = os.environ.copy()
-        query_environment["BELLA_DOCTOR_CHROME_NAME"] = Path(cls.chrome).name
-        query_environment["BELLA_DOCTOR_PROFILE_PATH"] = str(profile_path)
-        completed = subprocess.run(
-            [
-                powershell,
-                "-NoProfile",
-                "-NonInteractive",
-                "-Command",
-                script,
-            ],
-            check=False,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            env=query_environment,
-            timeout=15,
-        )
-        if completed.returncode != 0:
+        launch_command: list[str],
+    ) -> None:
+        system_temp = Path(tempfile.gettempdir()).resolve()
+        resolved_root = temp_root.resolve()
+        resolved_profile = profile_path.resolve()
+        if (
+            resolved_root.parent != system_temp
+            or not resolved_root.name.startswith("bella-doctor-browser-")
+            or resolved_profile != resolved_root / "chrome-profile"
+        ):
             raise AssertionError(
-                f"could not inspect test-owned Chrome processes for {profile_path}: "
-                f"{completed.stderr.strip()}"
+                f"refusing to launch Chrome outside the exact test-owned profile boundary: {profile_path}"
             )
-        processes = json.loads(completed.stdout or "[]")
-        if isinstance(processes, dict):
-            processes = [processes]
-        for process in processes:
-            command_line = str(process.get("CommandLine") or "")
-            if (
-                "--user-data-dir=" not in command_line
-                or str(profile_path).casefold() not in command_line.casefold()
-                or "bella-doctor-browser-" not in command_line.casefold()
-            ):
-                raise AssertionError(f"refusing to terminate unproven Chrome process: {process}")
-        return processes
+
+        installed_chrome = Path(cls.chrome).resolve(strict=True)
+        launched_chrome = Path(launch_command[0]).resolve(strict=True)
+        if not installed_chrome.is_file() or launched_chrome != installed_chrome:
+            raise AssertionError(
+                f"refusing to launch an unexpected Chrome executable: {launch_command[0]}"
+            )
+
+        expected_profile_argument = f"--user-data-dir={resolved_profile}"
+        if launch_command.count(expected_profile_argument) != 1:
+            raise AssertionError(
+                f"Chrome launch does not own the exact test profile {resolved_profile}: {launch_command}"
+            )
 
     @classmethod
-    def _terminate_windows_test_owned_chrome(cls, profile_path: Path) -> None:
-        deadline = time.monotonic() + 15
+    def _terminate_windows_test_owned_chrome(
+        cls,
+        process: subprocess.Popen[bytes],
+        temp_root: Path,
+        profile_path: Path,
+        launch_command: list[str],
+    ) -> None:
+        cls._validate_test_owned_chrome_launch(temp_root, profile_path, launch_command)
+        if list(process.args) != launch_command or process.pid <= 0:
+            raise AssertionError(
+                f"refusing to terminate Chrome without the exact retained Popen ownership: "
+                f"PID {process.pid}; args {process.args}"
+            )
+        if process.poll() is not None:
+            return
+
+        taskkill = subprocess.Popen(
+            ["taskkill.exe", "/PID", str(process.pid), "/T", "/F"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        try:
+            taskkill.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            taskkill.kill()
+            try:
+                taskkill.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                pass
+        if process.poll() is None:
+            process.kill()
+
+    @staticmethod
+    def _read_windows_process_command_line(process_handle: int) -> str:
+        import ctypes
+        from ctypes import wintypes
+
+        class ProcessBasicInformation(ctypes.Structure):
+            _fields_ = [
+                ("Reserved1", ctypes.c_void_p),
+                ("PebBaseAddress", ctypes.c_void_p),
+                ("Reserved2_0", ctypes.c_void_p),
+                ("Reserved2_1", ctypes.c_void_p),
+                ("UniqueProcessId", ctypes.c_void_p),
+                ("InheritedFromUniqueProcessId", ctypes.c_void_p),
+            ]
+
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        ntdll = ctypes.WinDLL("ntdll")
+        kernel32.ReadProcessMemory.argtypes = [
+            wintypes.HANDLE,
+            wintypes.LPCVOID,
+            wintypes.LPVOID,
+            ctypes.c_size_t,
+            ctypes.POINTER(ctypes.c_size_t),
+        ]
+        kernel32.ReadProcessMemory.restype = wintypes.BOOL
+
+        def read_memory(address: int, size: int) -> bytes:
+            buffer = (ctypes.c_ubyte * size)()
+            read = ctypes.c_size_t()
+            if not kernel32.ReadProcessMemory(
+                process_handle,
+                address,
+                buffer,
+                size,
+                ctypes.byref(read),
+            ):
+                raise OSError(ctypes.get_last_error())
+            return bytes(buffer[: read.value])
+
+        basic = ProcessBasicInformation()
+        returned = wintypes.ULONG()
+        status = ntdll.NtQueryInformationProcess(
+            process_handle,
+            0,
+            ctypes.byref(basic),
+            ctypes.sizeof(basic),
+            ctypes.byref(returned),
+        )
+        if status != 0:
+            raise OSError(f"NtQueryInformationProcess status {status:#x}")
+        pointer_size = ctypes.sizeof(ctypes.c_void_p)
+        parameters_offset = 0x20 if pointer_size == 8 else 0x10
+        command_line_offset = 0x70 if pointer_size == 8 else 0x40
+        pointer_bytes = read_memory(basic.PebBaseAddress + parameters_offset, pointer_size)
+        parameters = int.from_bytes(pointer_bytes, "little")
+        unicode_string = read_memory(
+            parameters + command_line_offset,
+            16 if pointer_size == 8 else 8,
+        )
+        length = int.from_bytes(unicode_string[0:2], "little")
+        buffer_offset = 8 if pointer_size == 8 else 4
+        buffer_address = int.from_bytes(
+            unicode_string[buffer_offset : buffer_offset + pointer_size],
+            "little",
+        )
+        return read_memory(buffer_address, length).decode("utf-16-le", errors="replace")
+
+    @classmethod
+    def _windows_test_owned_profile_processes(
+        cls,
+        profile_path: Path,
+        *,
+        include_terminated: bool = False,
+    ) -> list[dict[str, object]]:
+        import ctypes
+        from ctypes import wintypes
+
+        system_temp = Path(tempfile.gettempdir()).resolve()
+        resolved_profile = profile_path.resolve()
+        test_root = resolved_profile.parent
+        if (
+            test_root.parent != system_temp
+            or not test_root.name.startswith("bella-doctor-browser-")
+            or resolved_profile != test_root / "chrome-profile"
+        ):
+            raise AssertionError(f"refusing to inspect a non-test Chrome profile: {profile_path}")
+
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        psapi = ctypes.WinDLL("psapi")
+        kernel32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+        kernel32.OpenProcess.restype = wintypes.HANDLE
+        kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+        kernel32.QueryFullProcessImageNameW.argtypes = [
+            wintypes.HANDLE,
+            wintypes.DWORD,
+            wintypes.LPWSTR,
+            ctypes.POINTER(wintypes.DWORD),
+        ]
+        kernel32.QueryFullProcessImageNameW.restype = wintypes.BOOL
+        kernel32.GetExitCodeProcess.argtypes = [
+            wintypes.HANDLE,
+            ctypes.POINTER(wintypes.DWORD),
+        ]
+        kernel32.GetExitCodeProcess.restype = wintypes.BOOL
+        psapi.EnumProcesses.argtypes = [
+            ctypes.POINTER(wintypes.DWORD),
+            wintypes.DWORD,
+            ctypes.POINTER(wintypes.DWORD),
+        ]
+        psapi.EnumProcesses.restype = wintypes.BOOL
+
+        pids = (wintypes.DWORD * 32768)()
+        needed = wintypes.DWORD()
+        if not psapi.EnumProcesses(pids, ctypes.sizeof(pids), ctypes.byref(needed)):
+            raise AssertionError(f"could not inspect Windows process IDs: {ctypes.get_last_error()}")
+
+        profile_arguments = (
+            f"--user-data-dir={resolved_profile}".casefold(),
+            f'--user-data-dir="{resolved_profile}"'.casefold(),
+        )
+        matches: list[dict[str, object]] = []
+        for pid in pids[: needed.value // ctypes.sizeof(wintypes.DWORD)]:
+            process_handle = kernel32.OpenProcess(0x0400 | 0x0010 | 0x0001, False, pid)
+            if not process_handle:
+                continue
+            retain_handle = False
+            try:
+                image = ctypes.create_unicode_buffer(32768)
+                image_length = wintypes.DWORD(len(image))
+                if not kernel32.QueryFullProcessImageNameW(
+                    process_handle,
+                    0,
+                    image,
+                    ctypes.byref(image_length),
+                ):
+                    continue
+                if Path(image.value).name.casefold() != "chrome.exe":
+                    continue
+                try:
+                    command_line = cls._read_windows_process_command_line(process_handle)
+                except OSError:
+                    continue
+                folded_command_line = command_line.casefold()
+                if not any(argument in folded_command_line for argument in profile_arguments):
+                    continue
+                if "bella-doctor-browser-" not in folded_command_line:
+                    raise AssertionError(
+                        f"refusing a Chrome process without the exact test marker: PID {pid}"
+                    )
+                if not Path(image.value).samefile(Path(cls.chrome)):
+                    raise AssertionError(
+                        f"refusing an unexpected Chrome executable for test profile {profile_path}: "
+                        f"PID {pid}; executable {image.value}"
+                    )
+                exit_code = wintypes.DWORD()
+                if not kernel32.GetExitCodeProcess(process_handle, ctypes.byref(exit_code)):
+                    continue
+                is_active = exit_code.value == 259  # STILL_ACTIVE
+                if not include_terminated and not is_active:
+                    continue
+                matches.append(
+                    {
+                        "ProcessId": int(pid),
+                        "ProcessHandle": int(process_handle),
+                        "ExecutablePath": image.value,
+                        "CommandLine": command_line,
+                        "Active": is_active,
+                    }
+                )
+                retain_handle = True
+            finally:
+                if not retain_handle:
+                    kernel32.CloseHandle(process_handle)
+        return matches
+
+    @classmethod
+    def _terminate_windows_test_owned_profile_residue(cls, profile_path: Path) -> None:
+        import ctypes
+        from ctypes import wintypes
+
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel32.TerminateProcess.argtypes = [wintypes.HANDLE, wintypes.UINT]
+        kernel32.TerminateProcess.restype = wintypes.BOOL
+        kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+        kernel32.CloseHandle.restype = wintypes.BOOL
+        deadline = time.monotonic() + 45
+        quiet_since: float | None = None
+        observed_pids: set[int] = set()
+        kill_errors: set[str] = set()
+        while True:
+            matches = cls._windows_test_owned_profile_processes(profile_path)
+            if not matches:
+                if quiet_since is None:
+                    quiet_since = time.monotonic()
+                elif time.monotonic() - quiet_since >= 0.5:
+                    return
+                if time.monotonic() >= deadline:
+                    return
+                time.sleep(0.1)
+                continue
+
+            quiet_since = None
+            process_ids = sorted(int(match["ProcessId"]) for match in matches)
+            observed_pids.update(process_ids)
+            for match in matches:
+                process_id = int(match["ProcessId"])
+                process_handle = int(match["ProcessHandle"])
+                try:
+                    if not kernel32.TerminateProcess(process_handle, 1):
+                        kill_errors.add(
+                            f"PID {process_id}: TerminateProcess error {ctypes.get_last_error()}"
+                        )
+                finally:
+                    kernel32.CloseHandle(process_handle)
+            if time.monotonic() >= deadline:
+                remaining = cls._windows_test_owned_profile_processes(profile_path)
+                if not remaining:
+                    return
+                remaining_pids = [int(match["ProcessId"]) for match in remaining]
+                for match in remaining:
+                    kernel32.CloseHandle(int(match["ProcessHandle"]))
+                raise AssertionError(
+                    f"test-owned Chrome residue did not exit for {profile_path}; "
+                    f"observed PIDs {sorted(observed_pids)}; "
+                    f"remaining PIDs {remaining_pids}; "
+                    f"termination errors {sorted(kill_errors)}"
+                )
+            time.sleep(0.1)
+
+    @classmethod
+    def _wait_for_windows_test_owned_profile_objects(cls, profile_path: Path) -> None:
+        import ctypes
+
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        deadline = time.monotonic() + 60
+        quiet_since: float | None = None
         observed_pids: set[int] = set()
         while True:
-            processes = cls._windows_test_owned_chrome_processes(profile_path)
-            if not processes:
-                return
-            for process in processes:
-                process_id = int(process["ProcessId"])
-                observed_pids.add(process_id)
-                subprocess.run(
-                    ["taskkill.exe", "/PID", str(process_id), "/F"],
-                    check=False,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    timeout=10,
-                )
+            matches = cls._windows_test_owned_profile_processes(
+                profile_path,
+                include_terminated=True,
+            )
+            process_ids = sorted(int(match["ProcessId"]) for match in matches)
+            observed_pids.update(process_ids)
+            for match in matches:
+                kernel32.CloseHandle(int(match["ProcessHandle"]))
+            if not matches:
+                if quiet_since is None:
+                    quiet_since = time.monotonic()
+                elif time.monotonic() - quiet_since >= 0.5:
+                    return
+                time.sleep(0.1)
+                continue
+            quiet_since = None
             if time.monotonic() >= deadline:
-                remaining = cls._windows_test_owned_chrome_processes(profile_path)
-                remaining_pids = [int(process["ProcessId"]) for process in remaining]
                 raise AssertionError(
-                    f"test-owned Chrome processes did not exit for {profile_path}; "
-                    f"observed PIDs {sorted(observed_pids)}; remaining PIDs {remaining_pids}"
+                    f"test-owned Chrome process objects did not disappear for {profile_path}; "
+                    f"observed PIDs {sorted(observed_pids)}; remaining PIDs {process_ids}"
                 )
             time.sleep(0.1)
 
@@ -1690,43 +2033,109 @@ setTimeout(function () {
         harness_path = temp_root / "doctor-harness.html"
         profile_path = temp_root / "chrome-profile"
         process: subprocess.Popen[bytes] | None = None
-        stdout_bytes = b""
-        timed_out = False
+        stdout_chunks: list[bytes] = []
+        result_ready = threading.Event()
+        reader_done = threading.Event()
+        result_value: list[dict[str, object]] = []
+        result_parse_error: list[BaseException] = []
+        reader_error: list[BaseException] = []
+        reader: threading.Thread | None = None
+        result_timed_out = False
+        launch_command = [
+            str(Path(cls.chrome).resolve(strict=True)),
+            "--headless=new",
+            "--disable-background-networking",
+            "--disable-component-update",
+            "--disable-default-apps",
+            "--disable-extensions",
+            "--disable-gpu",
+            "--no-first-run",
+            "--no-sandbox",
+            "--allow-file-access-from-files",
+            "--run-all-compositor-stages-before-draw",
+            "--virtual-time-budget=1000",
+            "--window-size=390,844",
+            f"--user-data-dir={profile_path.resolve()}",
+            "--dump-dom",
+            harness_path.as_uri(),
+        ]
         try:
             harness_path.write_text(harness, encoding="utf-8", newline="\n")
+            cls._validate_test_owned_chrome_launch(temp_root, profile_path, launch_command)
             process = subprocess.Popen(
-                [
-                    cls.chrome,
-                    "--headless=new",
-                    "--disable-background-networking",
-                    "--disable-component-update",
-                    "--disable-default-apps",
-                    "--disable-extensions",
-                    "--disable-gpu",
-                    "--no-first-run",
-                    "--no-sandbox",
-                    "--allow-file-access-from-files",
-                    "--run-all-compositor-stages-before-draw",
-                    "--virtual-time-budget=1000",
-                    "--window-size=390,844",
-                    f"--user-data-dir={profile_path}",
-                    "--dump-dom",
-                    harness_path.as_uri(),
-                ],
+                launch_command,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.DEVNULL,
                 start_new_session=os.name != "nt",
             )
-            try:
-                stdout_bytes, _ = process.communicate(timeout=60)
-            except subprocess.TimeoutExpired:
-                timed_out = True
+
+            if process.stdout is None:
+                raise AssertionError("Chrome DOM harness stdout pipe was not created")
+
+            def read_browser_stdout() -> None:
+                try:
+                    while True:
+                        chunk = process.stdout.read1(4096)
+                        if not chunk:
+                            break
+                        stdout_chunks.append(chunk)
+                        stdout = b"".join(stdout_chunks).decode("utf-8", errors="replace")
+                        match = re.search(r'<pre id="results">(.*?)</pre>', stdout, flags=re.DOTALL)
+                        if match is None or not match.group(1):
+                            continue
+                        try:
+                            parsed = json.loads(unescape(match.group(1)))
+                        except (json.JSONDecodeError, TypeError) as exc:
+                            result_parse_error.append(exc)
+                        else:
+                            if not isinstance(parsed, dict):
+                                result_parse_error.append(
+                                    TypeError(f"Chrome DOM harness published {type(parsed).__name__}, not an object")
+                                )
+                            else:
+                                result_value.append(parsed)
+                        result_ready.set()
+                        break
+                except BaseException as exc:
+                    reader_error.append(exc)
+                    result_ready.set()
+                finally:
+                    reader_done.set()
+
+            reader = threading.Thread(
+                target=read_browser_stdout,
+                name=f"bella-doctor-browser-stdout-{process.pid}",
+                daemon=True,
+            )
+            reader.start()
+            result_timed_out = not result_ready.wait(timeout=90)
         finally:
             process_cleanup_error: AssertionError | None = None
+            stdout_closed = False
+            if (
+                process is not None
+                and process.stdout is not None
+                and not result_timed_out
+            ):
+                if reader is not None:
+                    reader_done.wait(timeout=2)
+                    reader.join(timeout=0)
+                if reader is None or not reader.is_alive():
+                    process.stdout.close()
+                    stdout_closed = True
+                    try:
+                        process.wait(timeout=2)
+                    except subprocess.TimeoutExpired:
+                        pass
             if process is not None:
                 try:
                     if os.name == "nt":
-                        cls._terminate_windows_test_owned_chrome(profile_path)
+                        cls._terminate_windows_test_owned_chrome(
+                            process,
+                            temp_root,
+                            profile_path,
+                            launch_command,
+                        )
                     else:
                         try:
                             os.killpg(process.pid, signal.SIGKILL)
@@ -1734,47 +2143,81 @@ setTimeout(function () {
                             pass
                 except AssertionError as exc:
                     process_cleanup_error = exc
+            if process is not None:
                 if process.poll() is None:
                     process.kill()
-                remaining_stdout, _ = process.communicate(timeout=15)
-                if not stdout_bytes:
-                    stdout_bytes = remaining_stdout
-
-            cleanup_error: PermissionError | None = None
-            for attempt in range(100):
                 try:
-                    if profile_path.exists():
-                        shutil.rmtree(profile_path)
+                    process.wait(timeout=30)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+
+            if reader is not None:
+                reader_done.wait(timeout=15)
+                reader.join(timeout=0)
+            if process is not None and process.stdout is not None and not stdout_closed:
+                process.stdout.close()
+            if reader is not None:
+                reader_done.wait(timeout=5)
+                reader.join(timeout=0)
+                if reader.is_alive() and process_cleanup_error is None:
+                    process_cleanup_error = AssertionError(
+                        f"Chrome stdout reader did not exit for {profile_path}"
+                    )
+
+            if os.name == "nt":
+                try:
+                    cls._terminate_windows_test_owned_profile_residue(profile_path)
+                except AssertionError as exc:
+                    process_cleanup_error = exc
+
+            cleanup_error: OSError | None = None
+            for attempt in range(600):
+                try:
+                    if temp_root.exists():
+                        shutil.rmtree(temp_root)
                     cleanup_error = None
                     break
-                except PermissionError as exc:
+                except OSError as exc:
                     cleanup_error = exc
                     time.sleep(0.1)
             if cleanup_error is not None:
-                remaining_pids = []
-                if os.name == "nt":
-                    remaining_pids = [
-                        int(process["ProcessId"])
-                        for process in cls._windows_test_owned_chrome_processes(profile_path)
-                    ]
                 raise AssertionError(
                     f"Chrome did not release temporary profile {profile_path}; "
-                    f"remaining test-owned PIDs {remaining_pids}; last error: {cleanup_error}"
+                    f"exact parent PID {None if process is None else process.pid}; "
+                    f"parent return code {None if process is None else process.poll()}; "
+                    f"last error: {cleanup_error}"
                 ) from cleanup_error
-            shutil.rmtree(temp_root)
+            if os.name == "nt":
+                cls._wait_for_windows_test_owned_profile_objects(profile_path)
+            if process is not None and process.poll() is None:
+                try:
+                    process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    process_cleanup_error = AssertionError(
+                        f"Chrome parent PID {process.pid} did not exit for {profile_path}"
+                    )
             if process_cleanup_error is not None:
                 raise process_cleanup_error
 
-        if timed_out:
-            raise AssertionError(f"Chrome DOM harness timed out for temporary profile {profile_path}")
-        if process is None or process.returncode != 0:
+        if reader_error:
+            raise AssertionError(
+                f"Chrome DOM harness stdout reader failed for {profile_path}: {reader_error[0]}"
+            ) from reader_error[0]
+        if result_timed_out:
+            raise AssertionError(
+                f"Chrome DOM harness result timed out for temporary profile {profile_path}; "
+                f"captured {sum(len(chunk) for chunk in stdout_chunks)} stdout bytes"
+            )
+        if result_parse_error:
+            raise AssertionError(
+                f"Chrome DOM harness published invalid results for {profile_path}: {result_parse_error[0]}"
+            ) from result_parse_error[0]
+        if not result_value:
             returncode = None if process is None else process.returncode
-            raise AssertionError(f"Chrome DOM harness failed with {returncode}")
-        stdout = stdout_bytes.decode("utf-8", errors="replace")
-        match = re.search(r'<pre id="results">(.*?)</pre>', stdout, flags=re.DOTALL)
-        if match is None or not match.group(1):
-            raise AssertionError("Chrome DOM harness did not publish results")
-        return json.loads(unescape(match.group(1)))
+            raise AssertionError(
+                f"Chrome DOM harness did not publish results for {profile_path}; Chrome returned {returncode}"
+            )
+        return result_value[0]
 
     def test_sheet_fed_text_uses_safe_dom_construction_only(self) -> None:
         render_block = self.doctor_script[self.doctor_script.index("function renderDoctors") :]
