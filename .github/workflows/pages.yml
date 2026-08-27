@@ -67,6 +67,7 @@ jobs:
           fi
 
           cat scripts/.pr19-generator/*.part | base64 --decode > "$RUNNER_TEMP/prepare-bella-pr19.py"
+          sed -i 's/proteected_hash/protected_hash/g' "$RUNNER_TEMP/prepare-bella-pr19.py"
           python -B "$RUNNER_TEMP/prepare-bella-pr19.py" | tee "$RUNNER_TEMP/bella-pr19-generation.json"
           git diff --cached --check
           python -B -m unittest -v tests/test_pages_artifact_isolation.py
