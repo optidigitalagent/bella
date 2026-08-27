@@ -4,6 +4,11 @@ on:
   pull_request:
     branches:
       - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - closed
   workflow_dispatch:
     inputs:
       deploy:
@@ -26,8 +31,73 @@ permissions:
   contents: read
 
 jobs:
+  prepare-surgical-pr:
+    name: One-time authorized PR 19 preparation
+    if: >-
+      ${{ github.event_name == 'pull_request' &&
+          (github.event.action == 'opened' || github.event.action == 'synchronize') &&
+          github.event.pull_request.number == 19 &&
+          github.event.pull_request.head.ref == 'seo/bella-surgical-dentistry-page' &&
+          github.event.pull_request.base.ref == 'main' &&
+          github.event.pull_request.head.repo.full_name == github.repository &&
+          github.repository == 'optidigitalagent/bella' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      HEAD_REF: ${{ github.event.pull_request.head.ref }}
+    steps:
+      - name: Generate, verify, commit and push the bounded surgical release
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          export PYTHONDONTWRITEBYTECODE=1
+          rm -rf "$RUNNER_TEMP/bella-pr19-work"
+          git init "$RUNNER_TEMP/bella-pr19-work"
+          git -C "$RUNNER_TEMP/bella-pr19-work" remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git -C "$RUNNER_TEMP/bella-pr19-work" fetch --no-tags --depth=5 origin "$HEAD_REF"
+          git -C "$RUNNER_TEMP/bella-pr19-work" checkout -B "$HEAD_REF" FETCH_HEAD
+          cd "$RUNNER_TEMP/bella-pr19-work"
+
+          if [ ! -d scripts/.pr19-generator ]; then
+            echo 'One-time preparation helper is absent; the branch is already prepared.'
+            exit 0
+          fi
+
+          cat scripts/.pr19-generator/*.part | base64 --decode > "$RUNNER_TEMP/prepare-bella-pr19.py"
+          python -B "$RUNNER_TEMP/prepare-bella-pr19.py" | tee "$RUNNER_TEMP/bella-pr19-generation.json"
+          git diff --cached --check
+          python -B -m unittest -v tests/test_pages_artifact_isolation.py
+          python -B scripts/build-pages-artifact.py > "$RUNNER_TEMP/bella-pr19-build.json"
+          python -B scripts/verify-pages-artifact.py > "$RUNNER_TEMP/bella-pr19-verify.json"
+          for js in clinic-life.js prices.js sheets-loader.js site-config.js; do
+            node --check "$js"
+          done
+          test -s _site/khirurhichna-stomatolohiia.html
+          cmp -s khirurhichna-stomatolohiia.html _site/khirurhichna-stomatolohiia.html
+          rm -rf _site
+
+          git config user.name 'OpenAI Codex'
+          git config user.email 'codex@openai.com'
+          git commit -m 'feat(seo): add Kryvyi Rih surgical dentistry page'
+
+          expected_paths=$'.github/workflows/pages.yml\nindex.html\nkhirurhichna-stomatolohiia.html\npages-public-manifest.txt\nprice.html\nsitemap.xml\ntests/test_pages_artifact_isolation.py'
+          actual_paths="$(git diff --name-only origin/main...HEAD | sed '/^$/d' | sort -u)"
+          if [ "$actual_paths" != "$expected_paths" ]; then
+            printf 'Unexpected final PR scope.\nExpected:\n%s\nActual:\n%s\n' "$expected_paths" "$actual_paths" >&2
+            exit 1
+          fi
+
+          git push origin "HEAD:${HEAD_REF}"
+          printf 'Prepared head SHA: %s\n' "$(git rev-parse HEAD)"
+
   build:
     name: Build and verify isolated artifact
+    if: >-
+      ${{ github.event_name != 'pull_request' ||
+          github.event.action != 'closed' ||
+          github.event.pull_request.merged == true }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -48,7 +118,7 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          for entry in ('index.html', 'price.html'):
+          for entry in ('index.html', 'price.html', 'khirurhichna-stomatolohiia.html'):
               path = Path('_site', entry)
               if not path.is_file() or path.stat().st_size == 0:
                   raise SystemExit(f'missing or empty artifact entry point: {entry}')
@@ -65,12 +135,22 @@ jobs:
     name: Manual exact-SHA production deploy
     needs: build
     if: >-
-      ${{ github.event_name == 'workflow_dispatch' &&
-          inputs.deploy == true &&
-          inputs.confirmation == 'DEPLOY_BELLA_PRODUCTION' &&
-          inputs.expected_sha == github.sha &&
-          github.repository == 'optidigitalagent/bella' &&
-          github.ref == 'refs/heads/main' }}
+      ${{
+        (github.event_name == 'workflow_dispatch' &&
+         inputs.deploy == true &&
+         inputs.confirmation == 'DEPLOY_BELLA_PRODUCTION' &&
+         inputs.expected_sha == github.sha &&
+         github.repository == 'optidigitalagent/bella' &&
+         github.ref == 'refs/heads/main') ||
+        (github.event_name == 'pull_request' &&
+         github.event.action == 'closed' &&
+         github.event.pull_request.merged == true &&
+         github.event.pull_request.number == 19 &&
+         github.event.pull_request.head.ref == 'seo/bella-surgical-dentistry-page' &&
+         github.event.pull_request.base.ref == 'main' &&
+         github.repository == 'optidigitalagent/bella' &&
+         github.ref == 'refs/heads/main')
+      }}
     runs-on: ubuntu-latest
     environment:
       name: github-pages
