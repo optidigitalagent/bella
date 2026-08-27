@@ -56,8 +56,9 @@ jobs:
           rm -rf "$RUNNER_TEMP/bella-pr19-work"
           git init "$RUNNER_TEMP/bella-pr19-work"
           git -C "$RUNNER_TEMP/bella-pr19-work" remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          git -C "$RUNNER_TEMP/bella-pr19-work" fetch --no-tags --depth=5 origin "$HEAD_REF"
+          git -C "$RUNNER_TEMP/bella-pr19-work" fetch --no-tags --depth=50 origin "$HEAD_REF"
           git -C "$RUNNER_TEMP/bella-pr19-work" checkout -B "$HEAD_REF" FETCH_HEAD
+          git -C "$RUNNER_TEMP/bella-pr19-work" fetch --no-tags --depth=1 origin main:refs/remotes/origin/main
           cd "$RUNNER_TEMP/bella-pr19-work"
 
           if [ ! -d scripts/.pr19-generator ]; then
