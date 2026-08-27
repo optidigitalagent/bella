@@ -950,7 +950,7 @@
           <div class="footer-col-title">ПОСЛУГИ / ЦІНИ</div>
           <ul class="footer-links">
             <li><a href="price.html#terapiia">Терапевтична стоматологія</a></li>
-            <li><a href="price.html#khirurhiia">Хірургія</a></li>
+            <li><a href="khirurhichna-stomatolohiia.html">Хірургія</a></li>
             <li><a href="price.html#ortopediia">Ортопедія</a></li>
             <li><a href="price.html#ortodontiia">Ортодонтія</a></li>
             <li><a href="price.html#implantolohiia">Імплантологія</a></li>
@@ -1441,8 +1441,8 @@ document.querySelectorAll('button').forEach(b => {
   priceData.forEach(function(cat, i) {
     var a = document.createElement('a');
     a.className = 'service-card';
-    a.href = cat.slug === 'implantolohiia' ? 'implantatsiia-zubiv.html' : 'price.html#' + cat.slug;
-    var cardCta = cat.slug === 'implantolohiia' ? 'Детальніше про імплантацію' : 'Відкрити прайс';
+    a.href = cat.slug === 'khirurhiia' ? 'khirurhichna-stomatolohiia.html' : cat.slug === 'implantolohiia' ? 'implantatsiia-zubiv.html' : 'price.html#' + cat.slug;
+    var cardCta = cat.slug === 'khirurhiia' ? 'Детальніше про хірургію' : cat.slug === 'implantolohiia' ? 'Детальніше про імплантацію' : 'Відкрити прайс';
     a.innerHTML =
       '<div class="service-icon">' + icons[i % icons.length] + '</div>' +
       '<div class="service-name">' + cat.title + '</div>' +
