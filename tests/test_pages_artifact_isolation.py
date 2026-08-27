@@ -47,6 +47,7 @@ EXPECTED_SITEMAP_LOCS = [
     "https://belladentclinik.kr.ua/",
     "https://belladentclinik.kr.ua/price.html",
     "https://belladentclinik.kr.ua/implantatsiia-zubiv.html",
+    "https://belladentclinik.kr.ua/khirurhichna-stomatolohiia.html",
 ]
 SITE_ROOT = "https://belladentclinik.kr.ua/"
 LOGO_URL = f"{SITE_ROOT}images/bella-dent-mark.png.png"
@@ -96,6 +97,57 @@ EXPECTED_IMPLANTATION_PRICES = [
     ("Мембрана APRF", "2000 грн"),
     ("Редукція кісткової тканини", "2000 грн"),
     ("Імплант Сервіс", "3000 грн"),
+]
+SURGICAL_PAGE = 'khirurhichna-stomatolohiia.html'
+SURGICAL_TITLE = 'Хірургічна стоматологія у Кривому Розі — Bella Dent Clinic'
+SURGICAL_CANONICAL = f"{SITE_ROOT}{SURGICAL_PAGE}"
+SURGICAL_DESCRIPTION = 'Хірургічна стоматологія у Bella Dent Clinic у Кривому Розі: опубліковані послуги й ціни, лікар, контакти та запис на консультацію.'
+EXPECTED_SURGICAL_PRICES = [
+    ('Премедикація', '500 грн'),
+    ('Видалення уламку зуба', '200 грн'),
+    ('Видалення рухомого зуба при парадонтозі / парадонтиті', '400 грн'),
+    ('Видалення 1 кореневого зуба', '500 грн'),
+    ('Видалення 2 кореневого зуба', '1000 грн'),
+    ('Видалення 3 кореневого зуба', '1500 грн'),
+    ('Видалення екзостозів (обл. 1 зуба)', '800 грн'),
+    ('Видалення зуба мудрості (типове)', '1500 грн'),
+    ('Видалення зуба атипове', '2500 грн'),
+    ('Гемісекція зуба (без врахув. кістк.-пластичн. матеріалу)', '1500 грн'),
+    ('Видалення ретинованого зуба (без врахув. кістк.-пластичн. матеріалу)', '4200 грн'),
+    ('Видалення понадкомплектного зуба', '3000 грн'),
+    ('Резекція верхівки кореня при періодонтиті', '4500 грн'),
+    ('Реімплантація', '4500 грн'),
+    ('Цистектомія з резекцією верхівки кореня (без врахув. кістк.-пластичн. матеріалу)', '4500 грн'),
+    ('Цистектомія через лунку (без врахув. кістк.-пластичн. матеріалу)', '2200 грн'),
+    ('Мембранна тканина', '1500 грн'),
+    ('Встановлення титанового піну', '500 грн'),
+    ('Ксено кістка Bio Bone (0,25 м3, 1 вел. ложка)', '1500 грн'),
+    ('Алокістка Probones (0,25м3, 1 вел. ложка)', '1500 грн'),
+    ('Заповнення кісткового дефекту "КОЛЛАПАН" 1шт.', '500 грн'),
+    ('Заповнення кісткового дефекту "КОЛЛАПОЛ" 1шт.', '500 грн'),
+    ('Видалення доброякісної пухлини', '3000 грн'),
+    ('Виправлення вивиху СНЩС', '2000 грн'),
+    ('Репозиція зуба при неповному вивиху', '2000 грн'),
+    ('Гінгівектомія (обл. 1 зуба)', '1000 грн'),
+    ('Розтин абсцесу з наступним дренуванням', '900 грн'),
+    ('Розтин пародонтального абсцесу', '800 грн'),
+    ('Гострий перекороніт (висічення капюшона)', '1200 грн'),
+    ('Кюретаж пародонтального карману в обл. 1-го зуба', '1000 грн'),
+    ('Медична обробка слизової оболонки при стоматиті', '500 грн'),
+    ('Надання допомоги при альвеоліті (кюрет., мед. обр)', '800 грн'),
+    ('Лоскутна операція (без врахув. кістк.-пластичн. матеріалу)', '4200 грн'),
+    ('Накладення швів', '150 грн'),
+    ('Зняття швів', '150 грн'),
+    ('Пункція', '300 грн'),
+    ('Промивання лунки', '100 грн'),
+    ('Пластика вуздечки язика', '2000 грн'),
+    ('Пластика верхньої губи (за Лімбергом)', '3000 грн'),
+    ('Пластика передодні порожнини рота', '3000 грн'),
+    ('Висічення гіпертрофічно зміненої слизової оболонки (обл. 1 зуба)', '1000 грн'),
+    ('Секвестректомія', '2500 грн'),
+    ('Синтетичний кістковий композит (1гр)', '2000 грн'),
+    ('Промивка гайморової пазухи через лунку вид. зуба', '500 грн'),
+    ('Заповнення кісткового дефекта колагеновою губкою Резорба', '1500 грн'),
 ]
 INSTAGRAM_URL = "https://www.instagram.com/bella.dent.clinic"
 FACEBOOK_URL = "https://www.facebook.com/share/1JF7VKAp6X/?mibextid=wwXIfr"
@@ -769,13 +821,15 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
         )
         expected_destinations = [
             "price.html#terapiia",
-            "price.html#khirurhiia",
+            "khirurhichna-stomatolohiia.html",
             "price.html#ortopediia",
             "price.html#ortodontiia",
             "implantatsiia-zubiv.html",
         ]
         actual_destinations = [
-            "implantatsiia-zubiv.html"
+            "khirurhichna-stomatolohiia.html"
+            if slug == "khirurhiia"
+            else "implantatsiia-zubiv.html"
             if slug == "implantolohiia"
             else f"price.html#{slug}"
             for _, slug in categories
@@ -783,8 +837,7 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
         self.assertEqual(actual_destinations, expected_destinations)
         self.assertEqual(
             home_source.count(
-                "a.href = cat.slug === 'implantolohiia' ? "
-                "'implantatsiia-zubiv.html' : 'price.html#' + cat.slug;"
+                "a.href = cat.slug === 'khirurhiia' ? 'khirurhichna-stomatolohiia.html' : cat.slug === 'implantolohiia' ? 'implantatsiia-zubiv.html' : 'price.html#' + cat.slug;"
             ),
             1,
         )
@@ -792,6 +845,142 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
             home_source.count('<div class="services-grid" id="price-categories-grid"></div>'),
             1,
         )
+
+
+    def test_surgical_page_head_contract_is_exact(self) -> None:
+        source = (REPOSITORY_ROOT / SURGICAL_PAGE).read_text(encoding="utf-8", errors="strict")
+        parsed = parse_repository_html(SURGICAL_PAGE)
+        self.assertTrue(source.startswith('<!DOCTYPE html>\n<html lang="uk">\n'))
+        self.assertEqual(parsed.titles, [SURGICAL_TITLE])
+        self.assertEqual(parsed.canonicals, [SURGICAL_CANONICAL])
+        self.assertEqual(parsed.json_ld_texts, [])
+        expected_properties = {
+            "og:type": "website",
+            "og:locale": "uk_UA",
+            "og:site_name": "Bella Dent Clinic",
+            "og:title": SURGICAL_TITLE,
+            "og:description": SURGICAL_DESCRIPTION,
+            "og:url": SURGICAL_CANONICAL,
+            "og:image": LOGO_URL,
+            "og:image:alt": "Bella Dent Clinic",
+        }
+        expected_names = {
+            "description": SURGICAL_DESCRIPTION,
+            "twitter:card": "summary",
+            "twitter:title": SURGICAL_TITLE,
+            "twitter:description": SURGICAL_DESCRIPTION,
+            "twitter:image": LOGO_URL,
+            "twitter:image:alt": "Bella Dent Clinic",
+        }
+        for attribute, expected in (("property", expected_properties), ("name", expected_names)):
+            for key, value in expected.items():
+                matches = [meta.get("content") for meta in parsed.metas if meta.get(attribute) == key]
+                self.assertEqual(matches, [value], key)
+        self.assertFalse(any(
+            "noindex" in (meta.get("content") or "").casefold()
+            for meta in parsed.metas
+            if (meta.get("name") or "").casefold() in {"robots", "googlebot"}
+        ))
+
+    def test_surgical_page_visible_answer_contract_is_exact(self) -> None:
+        parsed = parse_repository_html(SURGICAL_PAGE)
+        visible = normalized_text(parsed.body_text)
+        self.assertEqual(parsed.h1_texts, ["Хірургічна стоматологія у Кривому Розі"])
+        self.assertEqual(
+            parsed.h2_texts,
+            [
+                "Де надаються послуги?",
+                "Хто вказаний у списку лікарів?",
+                "Які послуги та ціни опубліковані?",
+                "Де переглянути імплантацію?",
+                "Ціни на хірургічні стоматологічні послуги",
+                "Як записатися на консультацію?",
+                "Контакти Bella Dent Clinic",
+            ],
+        )
+        required = [
+            "У Bella Dent Clinic у Кривому Розі опубліковано напрям «Хірургічна стоматологія».",
+            "Інформацію та ціни підтверджено за поточними публічними даними Bella Dent Clinic станом на 27 серпня 2026 року.",
+            "Bella Dent Clinic знаходиться у Кривому Розі за адресою: вул. Федора Караманиць, 43/3А, Покровський район, 50000.",
+            "Олійник Ігор Євгенійович — Головний лікар клініки, хірург-стоматолог, імплантолог, ортопед.",
+            "Нижче наведено 45 позицій розділу «Хірургічна стоматологія»",
+            "Пн–Пт 09:00–18:00 Сб 09:00–14:00 Нд 09:00–16:00",
+        ]
+        for value in required:
+            self.assertIn(value, visible)
+        self.assertNotIn("Ватутіна", visible)
+        self.assertEqual(len(parsed.id_values), len(set(parsed.id_values)))
+
+    def test_surgical_price_table_and_fallback_are_exact(self) -> None:
+        parsed = parse_repository_html(SURGICAL_PAGE)
+        self.assertEqual(
+            parsed.table_captions,
+            ["Опубліковані позиції розділу «Хірургічна стоматологія»"],
+        )
+        self.assertEqual(parsed.th_scopes, ["col", "col", "col"])
+        self.assertEqual(parsed.table_rows[0], ["№", "Назва", "Ціна"])
+        expected = [
+            [str(index), name, price]
+            for index, (name, price) in enumerate(EXPECTED_SURGICAL_PRICES, 1)
+        ]
+        self.assertEqual(parsed.table_rows[1:], expected)
+        self.assertEqual(len(parsed.table_rows) - 1, 45)
+        prices = (REPOSITORY_ROOT / "prices.js").read_text(encoding="utf-8", errors="strict")
+        start = prices.index("title: 'Хірургічна стоматологія'")
+        end = prices.index("title: 'Ортопедія'", start)
+        block = prices[start:end]
+        fallback = [
+            (name.replace("\\'", "'"), price)
+            for name, price in re.findall(
+                r"\{ name: '((?:\\'|[^'])+)', price: '([^']+)' \}",
+                block,
+            )
+        ]
+        self.assertEqual(fallback, EXPECTED_SURGICAL_PRICES)
+
+    def test_surgical_internal_links_and_fragments_are_resolvable(self) -> None:
+        home_source = (REPOSITORY_ROOT / "index.html").read_text(encoding="utf-8", errors="strict")
+        self.assertEqual(home_source.count("a.href = cat.slug === 'khirurhiia' ? 'khirurhichna-stomatolohiia.html' : cat.slug === 'implantolohiia' ? 'implantatsiia-zubiv.html' : 'price.html#' + cat.slug;"), 1)
+        self.assertEqual(home_source.count("var cardCta = cat.slug === 'khirurhiia' ? 'Детальніше про хірургію' : cat.slug === 'implantolohiia' ? 'Детальніше про імплантацію' : 'Відкрити прайс';"), 1)
+        price = parse_repository_html("price.html")
+        self.assertEqual(price.hrefs.count("/khirurhichna-stomatolohiia.html"), 1)
+        implantation = parse_repository_html(IMPLANTATION_PAGE)
+        self.assertEqual(implantation.hrefs.count("/khirurhichna-stomatolohiia.html"), 1)
+        pages = {
+            "/": parse_repository_html("index.html"),
+            "/price.html": price,
+            "/implantatsiia-zubiv.html": implantation,
+            "/khirurhichna-stomatolohiia.html": parse_repository_html(SURGICAL_PAGE),
+        }
+        surgical = pages["/khirurhichna-stomatolohiia.html"]
+        for href in surgical.hrefs:
+            url = urlsplit(href)
+            if url.scheme or url.netloc or href.startswith(("tel:", "mailto:")):
+                continue
+            target_path = url.path or "/khirurhichna-stomatolohiia.html"
+            if not target_path.startswith("/"):
+                target_path = "/" + target_path
+            self.assertIn(target_path, pages, href)
+            if not url.fragment:
+                continue
+            if target_path == "/price.html" and url.fragment == "khirurhiia":
+                self.assertIn("slug: 'khirurhiia'", (REPOSITORY_ROOT / "prices.js").read_text(encoding="utf-8"))
+            else:
+                self.assertIn(url.fragment, pages[target_path].ids, href)
+
+    def test_surgical_page_restricted_content_and_crawler_guards(self) -> None:
+        source = (REPOSITORY_ROOT / SURGICAL_PAGE).read_text(encoding="utf-8", errors="strict")
+        visible = normalized_text(parse_repository_html(SURGICAL_PAGE).body_text).casefold()
+        for forbidden in (
+            "гарантія", "гарантований", "100%", "безболіс", "назавжди",
+            "підходить усім", "протипоказ", "ризик", "відновлен",
+            "успішність", "років досвіду", "ліцензован", "перевірено лікарем",
+            "терміновий прийом", "лікуємо дітей", "обов’язкова кт",
+        ):
+            self.assertNotIn(forbidden, visible)
+        for marker in ("bot-only", "ai-only", "hidden-ai", "oai-searchbot", "gptbot"):
+            self.assertNotIn(marker, source.casefold())
+        self.assertNotRegex(source.casefold(), r"<meta[^>]+(?:noindex|nofollow)")
 
     def test_implantation_page_head_contract_is_exact(self) -> None:
         source = (REPOSITORY_ROOT / IMPLANTATION_PAGE).read_text(encoding="utf-8", errors="strict")
@@ -924,13 +1113,13 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
         home_source = (REPOSITORY_ROOT / "index.html").read_text(encoding="utf-8", errors="strict")
         self.assertEqual(
             home_source.count(
-                "a.href = cat.slug === 'implantolohiia' ? 'implantatsiia-zubiv.html' : 'price.html#' + cat.slug;"
+                "a.href = cat.slug === 'khirurhiia' ? 'khirurhichna-stomatolohiia.html' : cat.slug === 'implantolohiia' ? 'implantatsiia-zubiv.html' : 'price.html#' + cat.slug;"
             ),
             1,
         )
         self.assertEqual(
             home_source.count(
-                "var cardCta = cat.slug === 'implantolohiia' ? 'Детальніше про імплантацію' : 'Відкрити прайс';"
+                "var cardCta = cat.slug === 'khirurhiia' ? 'Детальніше про хірургію' : cat.slug === 'implantolohiia' ? 'Детальніше про імплантацію' : 'Відкрити прайс';"
             ),
             1,
         )
@@ -949,6 +1138,7 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
             "/": parse_repository_html("index.html"),
             "/price.html": price,
             "/implantatsiia-zubiv.html": parse_repository_html(IMPLANTATION_PAGE),
+            "/khirurhichna-stomatolohiia.html": parse_repository_html(SURGICAL_PAGE),
         }
         implantation = pages["/implantatsiia-zubiv.html"]
         for href in implantation.hrefs:
@@ -999,9 +1189,11 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
         index = parse_repository_html("index.html")
         price = parse_repository_html("price.html")
         implantation = parse_repository_html(IMPLANTATION_PAGE)
+        surgical = parse_repository_html(SURGICAL_PAGE)
         self.assertEqual(len(index.json_ld_texts), 1)
         self.assertEqual(price.json_ld_texts, [])
         self.assertEqual(implantation.json_ld_texts, [])
+        self.assertEqual(surgical.json_ld_texts, [])
 
         entity = json.loads(index.json_ld_texts[0])
         expected = {
@@ -1155,7 +1347,7 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
         self.assertIn(b"<body", price_raw)
         price_body = b"<body" + price_raw.split(b"<body", 1)[1]
         canonical_price_body = canonicalize_newlines_to_lf(price_body)
-        approved_price_body_hash = "c3f4d4c35949adee4fd2c645c92e79b264cf7b785868d66566d324ed698dbf64"
+        approved_price_body_hash = "ec497c6363316582dc89931c6fff850ddea19f0a4eb7eaf05ae17e3af1a51cd6"
         self.assertEqual(
             hashlib.sha256(canonical_price_body).hexdigest(),
             approved_price_body_hash,
@@ -1172,7 +1364,7 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
         )
         self.assertEqual(
             hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
-            "2da6b3fc641a157c7adad068528232c2538c2de49888963ae4c634f80666dd3e",
+            "80387b7ab0b143750e6dd6fa3b092a0272f8301a78c566e8c02ebb44de2aef9a",
         )
 
     def test_homepage_static_image_delivery_contract_is_exact(self) -> None:
@@ -1329,7 +1521,15 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
             capture_output=True,
         ).stdout.decode("utf-8", errors="strict")
         tracked_paths = [path for path in tracked_output.split("\0") if path]
-        allowed_paths = {"index.html", "tests/test_pages_artifact_isolation.py"}
+        allowed_paths = {
+            "implantatsiia-zubiv.html",
+            "index.html",
+            "khirurhichna-stomatolohiia.html",
+            "pages-public-manifest.txt",
+            "price.html",
+            "sitemap.xml",
+            "tests/test_pages_artifact_isolation.py",
+        }
         protected_records = []
         for path in tracked_paths:
             if path in allowed_paths:
@@ -1343,10 +1543,10 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
                 encoding="utf-8",
             ).stdout.strip()
             protected_records.append(f"{path}\0{object_id}")
-        self.assertEqual(len(protected_records), 175)
+        self.assertEqual(len(protected_records), 171)
         self.assertEqual(
             hashlib.sha256("\n".join(protected_records).encode("utf-8")).hexdigest(),
-            "6c101e39386dce22d7f0ddd712bf2f849d30ba62e46e6ca59156338fecf42948",
+            "caf4ec1dd2bb079ed52e5671626715f944ca2f65b30672b33d95ad555d683122",
         )
 
         self.assertNotIn("llms.txt", self.manifest_entries)
@@ -1359,7 +1559,7 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
         encoded_path = quote(stale_path, safe="/").casefold()
 
         self.assertNotIn(stale_path, self.manifest_entries)
-        self.assertEqual(len(self.manifest_entries), 57)
+        self.assertEqual(len(self.manifest_entries), 58)
         for relative_path in self.manifest_entries:
             if Path(relative_path).suffix.casefold() not in {".css", ".html", ".js"}:
                 continue
@@ -1423,6 +1623,7 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
         self.assertEqual(price.canonicals, [f"{SITE_ROOT}price.html"])
         self.assertEqual(price.json_ld_texts, [])
         self.assertEqual(price.hrefs.count("/implantatsiia-zubiv.html"), 1)
+        self.assertEqual(price.hrefs.count("/khirurhichna-stomatolohiia.html"), 1)
 
         public_records = []
         for relative_path in self.manifest_entries:
@@ -1438,10 +1639,10 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
             ).stdout.strip()
             public_records.append(f"{relative_path}\0{object_id}")
         public_aggregate = hashlib.sha256("\n".join(public_records).encode("utf-8")).hexdigest()
-        self.assertEqual(len(public_records), 55)
+        self.assertEqual(len(public_records), 56)
         self.assertEqual(
             public_aggregate,
-            "b8f8bf9c151a8689f39aa2127751802fdbccb67bb6e723e2878f013eae1beb84",
+            "12d0a469213f35dcbeaf42e94f9680a12f63bcce281c647f5368228c3a78928c",
         )
         candidate_price_object = subprocess.run(
             ["git", "hash-object", "--path=price.html", "price.html"],
@@ -1451,7 +1652,7 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
             text=True,
             encoding="utf-8",
         ).stdout.strip()
-        self.assertEqual(candidate_price_object, "957d65949079bbc9b5a92207ab5179f82c151288")
+        self.assertEqual(candidate_price_object, "427ed9a7fb745abb066c1e47b64e2e87fe991810")
         self.assertNotEqual(
             candidate_price_object,
             "52db00f3a4b7e893ed477bd97c91084f8a590cba",
@@ -1475,12 +1676,12 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
         self.assertEqual(source.count(expected), 1)
 
     def test_manifest_and_candidate_artifact_have_exact_public_inventory(self) -> None:
-        expected_new_files = {"robots.txt", "sitemap.xml", IMPLANTATION_PAGE}
+        expected_new_files = {"robots.txt", "sitemap.xml", IMPLANTATION_PAGE, SURGICAL_PAGE}
         expected_protected_files = {".nojekyll", "CNAME"}
         forbidden_prefixes = (".github/", ".seo/", "docs/", "scripts/", "server/", "tests/")
 
-        self.assertEqual(len(self.manifest_entries), 57)
-        self.assertEqual(len(set(self.manifest_entries)), 57)
+        self.assertEqual(len(self.manifest_entries), 58)
+        self.assertEqual(len(set(self.manifest_entries)), 58)
         self.assertTrue(expected_new_files.issubset(self.manifest_entries))
         self.assertTrue(expected_protected_files.issubset(self.manifest_entries))
         self.assertNotIn("pages-public-manifest.txt", self.manifest_entries)
@@ -1488,8 +1689,8 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
         self.assertFalse(
             any(entry.startswith(forbidden_prefixes) for entry in self.manifest_entries)
         )
-        self.assertEqual(self.build_report["file_count"], 57)
-        self.assertEqual(self.verify_report["file_count"], 57)
+        self.assertEqual(self.build_report["file_count"], 58)
+        self.assertEqual(self.verify_report["file_count"], 58)
         self.assertEqual(self.verify_report["status"], "verified")
 
         artifact_files = {
@@ -1528,7 +1729,7 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
         loc_tag = f"{{{SITEMAP_NAMESPACE}}}loc"
         self.assertEqual(root.tag, f"{{{SITEMAP_NAMESPACE}}}urlset")
         urls = list(root)
-        self.assertEqual([element.tag for element in urls], [url_tag, url_tag, url_tag])
+        self.assertEqual([element.tag for element in urls], [url_tag] * len(EXPECTED_SITEMAP_LOCS))
         for element in urls:
             self.assertEqual([child.tag for child in element], [loc_tag])
         locs = [element[0].text for element in urls]
@@ -1544,6 +1745,7 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
             "index.html": "https://belladentclinik.kr.ua/",
             "price.html": "https://belladentclinik.kr.ua/price.html",
             IMPLANTATION_PAGE: IMPLANTATION_CANONICAL,
+            SURGICAL_PAGE: SURGICAL_CANONICAL,
         }
         for relative_path, canonical in expected.items():
             with self.subTest(relative_path=relative_path):
@@ -1569,6 +1771,7 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
         self.assertEqual(price.hrefs.count("/#services"), 1)
         self.assertEqual(price.hrefs.count("/#doctors"), 1)
         self.assertEqual(price.hrefs.count("/implantatsiia-zubiv.html"), 1)
+        self.assertEqual(price.hrefs.count("/khirurhichna-stomatolohiia.html"), 1)
 
         normalized_fragments = {
             urlsplit(href).fragment

@@ -51,6 +51,7 @@ images/1779104673660235.jpg
 images/bella-dent-mark.png.png
 implantatsiia-zubiv.html
 index.html
+khirurhichna-stomatolohiia.html
 price.html
 prices.js
 robots.txt
