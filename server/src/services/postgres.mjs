@@ -172,4 +172,52 @@ export class PostgresRepository {
     const result = await this.executor.query(statement.text, statement.values);
     return normalizeRecord(result.rows[0] || null);
   }
+
+  async upsertLeadSubscriber(subscriber) {
+    const result = await this.executor.query(`
+      INSERT INTO telegram_lead_subscribers (
+        chat_id, user_id, username, first_name, last_name, is_active, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, true, now())
+      ON CONFLICT (chat_id) DO UPDATE SET
+        user_id = EXCLUDED.user_id,
+        username = EXCLUDED.username,
+        first_name = EXCLUDED.first_name,
+        last_name = EXCLUDED.last_name,
+        is_active = true,
+        updated_at = now()
+      RETURNING *
+    `, [
+      subscriber.chatId, subscriber.userId, subscriber.username || '',
+      subscriber.firstName || '', subscriber.lastName || ''
+    ]);
+    return normalizeRecord(result.rows[0]);
+  }
+
+  async deactivateLeadSubscriber(chatId) {
+    const result = await this.executor.query(`
+      UPDATE telegram_lead_subscribers
+      SET is_active = false, updated_at = now()
+      WHERE chat_id = $1
+      RETURNING *
+    `, [String(chatId)]);
+    return normalizeRecord(result.rows[0] || null);
+  }
+
+  async findLeadSubscriber(chatId) {
+    const result = await this.executor.query(
+      'SELECT * FROM telegram_lead_subscribers WHERE chat_id = $1',
+      [String(chatId)]
+    );
+    return normalizeRecord(result.rows[0] || null);
+  }
+
+  async listActiveLeadSubscriberIds() {
+    const result = await this.executor.query(`
+      SELECT chat_id
+      FROM telegram_lead_subscribers
+      WHERE is_active = true
+      ORDER BY created_at ASC
+    `);
+    return result.rows.map((row) => String(row.chat_id));
+  }
 }

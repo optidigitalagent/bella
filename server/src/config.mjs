@@ -8,9 +8,12 @@ const envSchema = z.object({
   ALLOWED_ORIGINS: z.string().default('https://belladentclinik.kr.ua,https://optidigitalagent.github.io'),
   TELEGRAM_BOT_TOKEN: z.string().trim().default(''),
   TELEGRAM_ADMIN_IDS: z.string().trim().default(''),
+  TELEGRAM_CMS_PUBLIC_ACCESS: z.enum(['true', 'false']).default('true'),
   TELEGRAM_WEBHOOK_SECRET: z.string().trim().default(''),
   TELEGRAM_LEADS_BOT_TOKEN: z.string().trim().default(''),
   TELEGRAM_LEADS_ADMIN_IDS: z.string().trim().default(''),
+  TELEGRAM_LEADS_PUBLIC_ACCESS: z.enum(['true', 'false']).default('true'),
+  TELEGRAM_LEADS_WEBHOOK_SECRET: z.string().trim().default(''),
   CLOUDINARY_CLOUD_NAME: z.string().trim().default(''),
   CLOUDINARY_API_KEY: z.string().trim().default(''),
   CLOUDINARY_API_SECRET: z.string().trim().default(''),
@@ -40,13 +43,18 @@ export function loadConfig(source = process.env) {
   const env = envSchema.parse(source);
   const cmsAdminIds = parseAdminIds(env.TELEGRAM_ADMIN_IDS, 'TELEGRAM_ADMIN_IDS');
   const leadsAdminIds = parseAdminIds(env.TELEGRAM_LEADS_ADMIN_IDS, 'TELEGRAM_LEADS_ADMIN_IDS');
-  if (env.TELEGRAM_WEBHOOK_SECRET && !/^[A-Za-z0-9_-]{1,256}$/.test(env.TELEGRAM_WEBHOOK_SECRET)) {
-    throw new Error('TELEGRAM_WEBHOOK_SECRET must contain 1-256 URL-safe characters');
+  for (const [name, value] of [
+    ['TELEGRAM_WEBHOOK_SECRET', env.TELEGRAM_WEBHOOK_SECRET],
+    ['TELEGRAM_LEADS_WEBHOOK_SECRET', env.TELEGRAM_LEADS_WEBHOOK_SECRET]
+  ]) {
+    if (value && !/^[A-Za-z0-9_-]{1,256}$/.test(value)) {
+      throw new Error(`${name} must contain 1-256 URL-safe characters`);
+    }
   }
   if (env.NODE_ENV === 'production') {
     const required = [
-      'PUBLIC_BASE_URL', 'TELEGRAM_BOT_TOKEN', 'TELEGRAM_ADMIN_IDS', 'TELEGRAM_WEBHOOK_SECRET',
-      'TELEGRAM_LEADS_BOT_TOKEN', 'TELEGRAM_LEADS_ADMIN_IDS',
+      'PUBLIC_BASE_URL', 'TELEGRAM_BOT_TOKEN', 'TELEGRAM_WEBHOOK_SECRET',
+      'TELEGRAM_LEADS_BOT_TOKEN',
       'CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET', 'DATABASE_URL'
     ];
     const missing = required.filter((name) => !env[name]);
@@ -64,11 +72,14 @@ export function loadConfig(source = process.env) {
       cms: {
         botToken: env.TELEGRAM_BOT_TOKEN,
         adminIds: cmsAdminIds,
+        publicAccess: env.TELEGRAM_CMS_PUBLIC_ACCESS === 'true',
         webhookSecret: env.TELEGRAM_WEBHOOK_SECRET
       },
       leads: {
         botToken: env.TELEGRAM_LEADS_BOT_TOKEN,
-        adminIds: leadsAdminIds
+        adminIds: leadsAdminIds,
+        publicAccess: env.TELEGRAM_LEADS_PUBLIC_ACCESS === 'true',
+        webhookSecret: env.TELEGRAM_LEADS_WEBHOOK_SECRET || env.TELEGRAM_WEBHOOK_SECRET
       }
     },
     cloudinary: {

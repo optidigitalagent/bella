@@ -41,5 +41,24 @@ export const migrations = [
       CREATE INDEX leads_created_at_idx ON leads (created_at DESC, id DESC);
       CREATE INDEX leads_status_idx ON leads (status, created_at DESC);
     `
+  },
+  {
+    version: 2,
+    name: 'create_telegram_lead_subscribers',
+    sql: `
+      CREATE TABLE telegram_lead_subscribers (
+        chat_id text PRIMARY KEY,
+        user_id text NOT NULL,
+        username text NOT NULL DEFAULT '',
+        first_name text NOT NULL DEFAULT '',
+        last_name text NOT NULL DEFAULT '',
+        is_active boolean NOT NULL DEFAULT true,
+        created_at timestamptz NOT NULL DEFAULT now(),
+        updated_at timestamptz NOT NULL DEFAULT now()
+      );
+
+      CREATE INDEX telegram_lead_subscribers_active_idx
+        ON telegram_lead_subscribers (is_active, updated_at DESC);
+    `
   }
 ];

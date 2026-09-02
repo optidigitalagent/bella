@@ -1,7 +1,8 @@
 export class MemoryRepository {
-  constructor({ news = [], leads = [] } = {}) {
+  constructor({ news = [], leads = [], leadSubscribers = [] } = {}) {
     this.news = news.map((item, index) => ({ ...item, _rowNumber: index + 2 }));
     this.leads = leads.map((item, index) => ({ ...item, _rowNumber: index + 2 }));
+    this.leadSubscribers = leadSubscribers.map((item) => ({ ...item }));
     this.failAppendNews = false;
     this.transactionQueue = Promise.resolve();
   }
@@ -13,11 +14,13 @@ export class MemoryRepository {
     await previous;
     const newsSnapshot = structuredClone(this.news);
     const leadsSnapshot = structuredClone(this.leads);
+    const subscribersSnapshot = structuredClone(this.leadSubscribers);
     try {
       return await callback(this);
     } catch (error) {
       this.news = newsSnapshot;
       this.leads = leadsSnapshot;
+      this.leadSubscribers = subscribersSnapshot;
       throw error;
     } finally {
       release();
@@ -47,12 +50,39 @@ export class MemoryRepository {
     this.leads[index] = { ...this.leads[index], ...patch };
     return { ...this.leads[index] };
   }
+  async upsertLeadSubscriber(subscriber) {
+    const index = this.leadSubscribers.findIndex((item) => item.chat_id === String(subscriber.chatId));
+    const record = {
+      chat_id: String(subscriber.chatId), user_id: String(subscriber.userId),
+      username: subscriber.username || '', first_name: subscriber.firstName || '',
+      last_name: subscriber.lastName || '', is_active: true
+    };
+    if (index < 0) this.leadSubscribers.push(record);
+    else this.leadSubscribers[index] = { ...this.leadSubscribers[index], ...record };
+    return { ...record };
+  }
+  async deactivateLeadSubscriber(chatId) {
+    const subscriber = this.leadSubscribers.find((item) => item.chat_id === String(chatId));
+    if (!subscriber) return null;
+    subscriber.is_active = false;
+    return { ...subscriber };
+  }
+  async findLeadSubscriber(chatId) {
+    const subscriber = this.leadSubscribers.find((item) => item.chat_id === String(chatId));
+    return subscriber ? { ...subscriber } : null;
+  }
+  async listActiveLeadSubscriberIds() {
+    return this.leadSubscribers.filter((item) => item.is_active).map((item) => item.chat_id);
+  }
 }
 
 export function makeConfig() {
   return {
     allowedOrigins: new Set(['https://belladentclinik.kr.ua']),
-    telegram: { cms: { webhookSecret: 'test-secret' } },
+    telegram: {
+      cms: { webhookSecret: 'test-secret' },
+      leads: { webhookSecret: 'leads-test-secret' }
+    },
     rateLimits: { leadWindowMs: 60_000, leadMax: 100, webhookWindowMs: 60_000, webhookMax: 100 }
   };
 }

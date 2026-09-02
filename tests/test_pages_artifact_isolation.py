@@ -1543,10 +1543,10 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
                 encoding="utf-8",
             ).stdout.strip()
             protected_records.append(f"{path}\0{object_id}")
-        self.assertEqual(len(protected_records), 171)
+        self.assertEqual(len(protected_records), 173)
         self.assertEqual(
             hashlib.sha256("\n".join(protected_records).encode("utf-8")).hexdigest(),
-            "caf4ec1dd2bb079ed52e5671626715f944ca2f65b30672b33d95ad555d683122",
+            "33d31b1046908ec768c757577d9a5d73de8dcd24314fbfd0e30d9871287d29d2",
         )
 
         self.assertNotIn("llms.txt", self.manifest_entries)

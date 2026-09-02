@@ -26,8 +26,8 @@ test('CMS commands and website leads use independent Telegram transports', async
   const draftStore = new DraftStore({ ttlMs: 10_000 });
   const config = {
     telegram: {
-      cms: { botToken: 'cms-token', adminIds: ['100'], webhookSecret: 'secret' },
-      leads: { botToken: 'leads-token', adminIds: ['200'] }
+      cms: { botToken: 'cms-token', adminIds: ['100'], publicAccess: true, webhookSecret: 'secret' },
+      leads: { botToken: 'leads-token', adminIds: ['200'], publicAccess: true, webhookSecret: 'leads-secret' }
     },
     cloudinary: { maxMediaBytes: 1_000 }
   };
@@ -42,7 +42,10 @@ test('CMS commands and website leads use independent Telegram transports', async
   });
 
   await runtime.telegramCms.handleUpdate({
-    message: { from: { id: 100 }, chat: { id: 100 }, text: '/start' }
+    message: { from: { id: 101 }, chat: { id: 101 }, text: '/start' }
+  });
+  await runtime.telegramLeadsBot.handleUpdate({
+    message: { from: { id: 201, first_name: 'Public' }, chat: { id: 201, type: 'private' }, text: '/start' }
   });
   await runtime.leadsService.submit({
     name: 'Routing QA',
@@ -55,12 +58,15 @@ test('CMS commands and website leads use independent Telegram transports', async
   assert.equal(runtime.cmsTelegram.token, 'cms-token');
   assert.equal(runtime.leadsTelegram.token, 'leads-token');
   assert.equal(runtime.cmsTelegram.messages.length, 1);
-  assert.equal(runtime.cmsTelegram.messages[0].chatId, 100);
+  assert.equal(runtime.cmsTelegram.messages[0].chatId, 101);
   assert.equal(runtime.cmsTelegram.messages[0].text.includes('Routing QA'), false);
-  assert.equal(runtime.leadsTelegram.messages.length, 1);
-  assert.equal(runtime.leadsTelegram.messages[0].chatId, '200');
-  assert.equal(runtime.leadsTelegram.messages[0].text.includes('Routing QA'), true);
-  assert.equal(runtime.leadsTelegram.messages[0].markup, undefined);
+  assert.equal(runtime.leadsTelegram.messages.length, 3);
+  assert.equal(runtime.leadsTelegram.messages[0].chatId, '201');
+  assert.equal(runtime.leadsTelegram.messages[0].text.includes('Підписку увімкнено'), true);
+  const leadMessages = runtime.leadsTelegram.messages.slice(1);
+  assert.deepEqual(leadMessages.map((message) => message.chatId).sort(), ['200', '201']);
+  assert.equal(leadMessages.every((message) => message.text.includes('Routing QA')), true);
+  assert.equal(leadMessages.every((message) => message.markup === undefined), true);
   assert.equal(repository.leads[0].status, 'delivered');
   draftStore.close();
 });

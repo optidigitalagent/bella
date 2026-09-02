@@ -29,13 +29,25 @@ test('PostgreSQL migrations, repositories, transactions, and concurrency', {
 
     await repository.migrate();
     await repository.migrate();
-    assert.equal((await pool.query('SELECT count(*)::int AS count FROM schema_migrations')).rows[0].count, 1);
+    assert.equal((await pool.query('SELECT count(*)::int AS count FROM schema_migrations')).rows[0].count, 2);
     const tables = await pool.query(`
       SELECT table_name FROM information_schema.tables
-      WHERE table_schema = $1 AND table_name IN ('news', 'leads')
+      WHERE table_schema = $1 AND table_name IN ('news', 'leads', 'telegram_lead_subscribers')
       ORDER BY table_name
     `, [schema]);
-    assert.deepEqual(tables.rows.map((row) => row.table_name), ['leads', 'news']);
+    assert.deepEqual(
+      tables.rows.map((row) => row.table_name),
+      ['leads', 'news', 'telegram_lead_subscribers']
+    );
+
+    await repository.upsertLeadSubscriber({
+      chatId: '2', userId: '2', username: 'bella_admin', firstName: 'Bella', lastName: 'Admin'
+    });
+    assert.deepEqual(await repository.listActiveLeadSubscriberIds(), ['2']);
+    assert.equal((await repository.findLeadSubscriber('2')).username, 'bella_admin');
+    await repository.deactivateLeadSubscriber('2');
+    assert.deepEqual(await repository.listActiveLeadSubscriberIds(), []);
+    await repository.upsertLeadSubscriber({ chatId: '2', userId: '2', firstName: 'Bella' });
 
     let id = 0;
     let tick = Date.parse('2026-08-11T08:00:00.000Z');
@@ -102,7 +114,7 @@ test('PostgreSQL migrations, repositories, transactions, and concurrency', {
     const leadsB = new LeadsService({ repository, telegram, adminIds: ['1'], idFactory: () => `lead_${++leadId}` });
     const lead = { name: 'Анна', phone: '+380671234567', comment: '', requestId: 'db-lead-request' };
     const leadResults = await Promise.all([leadsA.submit(lead), leadsB.submit(lead)]);
-    assert.equal(messages, 1);
+    assert.equal(messages, 2);
     assert.equal(new Set(leadResults.map((result) => result.id)).size, 1);
     assert.equal((await repository.listLeads()).length, 1);
     assert.equal((await repository.listLeads())[0].status, 'delivered');

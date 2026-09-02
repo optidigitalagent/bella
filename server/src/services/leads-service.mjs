@@ -10,6 +10,13 @@ export class LeadsService {
     this.idFactory = idFactory;
   }
 
+  async recipientIds(repository = this.repository) {
+    const subscribers = typeof repository.listActiveLeadSubscriberIds === 'function'
+      ? await repository.listActiveLeadSubscriberIds()
+      : [];
+    return [...new Set([...this.adminIds, ...subscribers].map(String))];
+  }
+
   async submit(lead) {
     const requestId = lead.requestId || randomUUID();
     const operation = async (repository) => {
@@ -40,15 +47,19 @@ export class LeadsService {
         'Дата:', record.created_at
       ].join('\n');
 
+      const recipientIds = await this.recipientIds(repository);
       const deliveries = await Promise.allSettled(
-        this.adminIds.map((adminId) => this.telegram.sendMessage(adminId, text))
+        recipientIds.map((recipientId) => this.telegram.sendMessage(recipientId, text))
       );
-      if (deliveries.some((result) => result.status === 'rejected')) {
+      const deliveredCount = deliveries.filter((result) => result.status === 'fulfilled').length;
+      if (!deliveredCount) {
         await repository.updateLead(record.id, { status: 'notification_failed' });
         return {
           error: new ExternalServiceError(
             'telegram',
-            'Lead was saved but could not be delivered to every configured administrator'
+            recipientIds.length
+              ? 'Lead was saved but could not be delivered to an active Telegram recipient'
+              : 'Lead was saved but there are no active Telegram recipients'
           )
         };
       }

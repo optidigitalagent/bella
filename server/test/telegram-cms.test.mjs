@@ -24,12 +24,25 @@ test('unauthorized Telegram ID has no CMS access', async () => {
   const cms = new TelegramCms({
     telegram,
     newsService: { getActiveInternal: async () => { newsCalls++; return []; } },
-    mediaService: {}, draftStore: store, adminIds: ['1'], maxMediaBytes: 1000,
+    mediaService: {}, draftStore: store, adminIds: ['1'], publicAccess: false, maxMediaBytes: 1000,
     logger: { error() {}, warn() {} }
   });
   await cms.handleUpdate(update('📰 Активні новини', 999));
   assert.equal(newsCalls, 0);
   assert.equal(telegram.messages.at(-1).text, 'Ця дія недоступна.');
+  store.close();
+});
+
+test('public CMS access allows a user who opens the bot link', async () => {
+  const telegram = makeTelegram();
+  const store = new DraftStore({ ttlMs: 10_000 });
+  const cms = new TelegramCms({
+    telegram,
+    newsService: {}, mediaService: {}, draftStore: store, adminIds: [], publicAccess: true,
+    maxMediaBytes: 1000, logger: { error() {}, warn() {} }
+  });
+  await cms.handleUpdate(update('/start', 999));
+  assert.equal(telegram.messages.at(-1).text, 'Bella Dent — управління сайтом');
   store.close();
 });
 
