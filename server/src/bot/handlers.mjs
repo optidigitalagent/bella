@@ -61,18 +61,19 @@ function mediaFromMessage(message) {
 }
 
 export class TelegramCms {
-  constructor({ telegram, newsService, mediaService, draftStore, adminIds, maxMediaBytes, logger }) {
+  constructor({ telegram, newsService, mediaService, draftStore, adminIds, publicAccess = true, maxMediaBytes, logger }) {
     this.telegram = telegram;
     this.newsService = newsService;
     this.mediaService = mediaService;
     this.draftStore = draftStore;
     this.adminIds = new Set(adminIds.map(String));
+    this.publicAccess = publicAccess;
     this.maxMediaBytes = maxMediaBytes;
     this.logger = logger;
   }
 
   isAuthorized(userId) {
-    return this.adminIds.has(String(userId));
+    return this.publicAccess || this.adminIds.has(String(userId));
   }
 
   async handleUpdate(update) {

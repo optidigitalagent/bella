@@ -26,7 +26,7 @@ const draftStore = new DraftStore({
     }
   }
 });
-const { leadsService, telegramCms } = createTelegramRuntime({
+const { leadsService, telegramCms, telegramLeadsBot, cmsTelegram, leadsTelegram } = createTelegramRuntime({
   config,
   repository,
   newsService,
@@ -40,6 +40,7 @@ const app = createApp({
   newsService,
   leadsService,
   telegramCms,
+  telegramLeadsBot,
   healthCheck: () => repository.ping(),
   logger
 });
@@ -47,6 +48,18 @@ const server = createServer(app);
 
 server.listen(config.port, '0.0.0.0', () => {
   logger.info('Bella Dent backend listening', { port: config.port, environment: config.nodeEnv });
+  if (config.publicBaseUrl) {
+    Promise.allSettled([
+      cmsTelegram.setWebhook(`${config.publicBaseUrl}/api/telegram/webhook`, config.telegram.cms.webhookSecret),
+      leadsTelegram.setWebhook(`${config.publicBaseUrl}/api/telegram/leads/webhook`, config.telegram.leads.webhookSecret)
+    ]).then((results) => {
+      results.forEach((result, index) => {
+        const bot = index === 0 ? 'cms' : 'leads';
+        if (result.status === 'fulfilled') logger.info('Telegram webhook configured', { bot });
+        else logger.error('Telegram webhook configuration failed', result.reason, { bot });
+      });
+    });
+  }
 });
 
 function shutdown(signal) {

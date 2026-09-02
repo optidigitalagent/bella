@@ -14,7 +14,7 @@ function secureEqual(actual, expected) {
   return actualBuffer.length === expectedBuffer.length && timingSafeEqual(actualBuffer, expectedBuffer);
 }
 
-export function createApp({ config, newsService, leadsService, telegramCms, healthCheck = async () => true, logger = defaultLogger }) {
+export function createApp({ config, newsService, leadsService, telegramCms, telegramLeadsBot, healthCheck = async () => true, logger = defaultLogger }) {
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', 1);
@@ -71,29 +71,33 @@ export function createApp({ config, newsService, leadsService, telegramCms, heal
     }
   });
 
-  const webhookLimiter = rateLimit({
-    windowMs: config.rateLimits.webhookWindowMs,
-    limit: config.rateLimits.webhookMax,
-    standardHeaders: false,
-    legacyHeaders: false,
-    message: { error: 'RATE_LIMITED' }
-  });
+  function registerTelegramWebhook(path, secret, handler) {
+    const webhookLimiter = rateLimit({
+      windowMs: config.rateLimits.webhookWindowMs,
+      limit: config.rateLimits.webhookMax,
+      standardHeaders: false,
+      legacyHeaders: false,
+      message: { error: 'RATE_LIMITED' }
+    });
+    app.post(path, (request, response, next) => {
+      const supplied = request.get('X-Telegram-Bot-Api-Secret-Token');
+      if (!secureEqual(supplied, secret)) {
+        next(new HttpError(401, 'UNAUTHORIZED', 'Unauthorized'));
+        return;
+      }
+      next();
+    }, webhookLimiter, async (request, response, next) => {
+      try {
+        await handler.handleUpdate(request.body);
+        response.status(200).json({ ok: true });
+      } catch (error) {
+        next(error);
+      }
+    });
+  }
 
-  app.post('/api/telegram/webhook', (request, response, next) => {
-    const supplied = request.get('X-Telegram-Bot-Api-Secret-Token');
-    if (!secureEqual(supplied, config.telegram.cms.webhookSecret)) {
-      next(new HttpError(401, 'UNAUTHORIZED', 'Unauthorized'));
-      return;
-    }
-    next();
-  }, webhookLimiter, async (request, response, next) => {
-    try {
-      await telegramCms.handleUpdate(request.body);
-      response.status(200).json({ ok: true });
-    } catch (error) {
-      next(error);
-    }
-  });
+  registerTelegramWebhook('/api/telegram/webhook', config.telegram.cms.webhookSecret, telegramCms);
+  registerTelegramWebhook('/api/telegram/leads/webhook', config.telegram.leads.webhookSecret, telegramLeadsBot);
 
   app.use((_request, response) => {
     response.status(404).json({ error: 'NOT_FOUND', message: 'Endpoint not found' });

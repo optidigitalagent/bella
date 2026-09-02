@@ -5,7 +5,8 @@ One Node.js 20+ Railway service provides:
 - `GET /health` with a live PostgreSQL connectivity check
 - `GET /api/news`
 - `POST /api/leads`
-- `POST /api/telegram/webhook`
+- `POST /api/telegram/webhook` for the CMS bot
+- `POST /api/telegram/leads/webhook` for the Leads bot
 - Telegram CMS create, edit, archive, paginated archive, and restore flows
 - Telegram media download and Cloudinary upload
 - PostgreSQL persistence with transactional rolling publication and request idempotency
@@ -42,9 +43,11 @@ CMS Telegram bot -> webhook -> bella-dent-api -> PostgreSQL -> website API
 Website lead -> bella-dent-api -> PostgreSQL -> Leads Telegram bot -> lead admins
 ```
 
-The CMS and Leads bots are independent transports. Only the CMS bot owns the
-Telegram webhook and Clinic Life commands. The Leads bot is outbound-only and
-uses `sendMessage` to notify its dedicated administrator list.
+The CMS and Leads bots are independent transports and each owns its own Telegram
+webhook. The CMS bot exposes the Clinic Life commands. A person opens the Leads
+bot and presses `/start` to persistently subscribe that private chat to website
+lead notifications. `/stop` disables notifications and `/status` reports the
+current subscription state.
 
 1. Keep the API service root directory at `/server` and config path at `/server/railway.json`.
 2. Add a PostgreSQL service to the same Railway project.
@@ -52,7 +55,8 @@ uses `sendMessage` to notify its dedicated administrator list.
 4. Deploy normally. Startup runs versioned, idempotent migrations before binding the HTTP port.
 5. Generate a public API domain and set it as `PUBLIC_BASE_URL` without a trailing slash.
 6. Verify `/health` returns `{"status":"ok","database":"ok"}`.
-7. Run `npm run telegram:set-webhook` after deployment.
+7. Webhooks for both bots are configured automatically after startup. You can
+   also run `npm run telegram:set-webhook` to configure them manually.
 
 The rolling maximum-three rule uses a PostgreSQL transaction and transaction-scoped advisory lock. Multiple API replicas are safe for publish/restore and duplicate request handling.
 
@@ -70,10 +74,13 @@ The rolling maximum-three rule uses a PostgreSQL transaction and transaction-sco
 | `DATABASE_CONNECTION_TIMEOUT_MS` | no | Default `10000`. |
 | `DATABASE_IDLE_TIMEOUT_MS` | no | Default `30000`. |
 | `TELEGRAM_BOT_TOKEN` | yes | Existing Clinic Life CMS bot token. |
-| `TELEGRAM_ADMIN_IDS` | yes | Comma-separated numeric IDs authorized to operate the CMS. |
+| `TELEGRAM_ADMIN_IDS` | no | Optional fallback IDs allowed when public CMS access is disabled. |
+| `TELEGRAM_CMS_PUBLIC_ACCESS` | no | Default `true`; anyone who opens the CMS bot can operate it. Set `false` to restrict it to `TELEGRAM_ADMIN_IDS`. |
 | `TELEGRAM_WEBHOOK_SECRET` | yes | URL-safe secret for the CMS bot webhook. |
-| `TELEGRAM_LEADS_BOT_TOKEN` | yes | Separate outbound-only website lead notification bot token. |
-| `TELEGRAM_LEADS_ADMIN_IDS` | yes | Comma-separated numeric IDs that receive website leads. |
+| `TELEGRAM_LEADS_BOT_TOKEN` | yes | Separate website lead notification bot token. |
+| `TELEGRAM_LEADS_ADMIN_IDS` | no | Optional permanent lead recipients; combined with active `/start` subscribers. |
+| `TELEGRAM_LEADS_PUBLIC_ACCESS` | no | Default `true`; anyone who opens the Leads bot can subscribe with `/start`. |
+| `TELEGRAM_LEADS_WEBHOOK_SECRET` | no | Separate URL-safe secret for the Leads bot webhook; falls back to `TELEGRAM_WEBHOOK_SECRET`. |
 | `CLOUDINARY_CLOUD_NAME` | yes | Cloudinary cloud name. |
 | `CLOUDINARY_API_KEY` | yes | Server-side API key. |
 | `CLOUDINARY_API_SECRET` | yes | Server-side API secret. |
@@ -89,7 +96,7 @@ The rolling maximum-three rule uses a PostgreSQL transaction and transaction-sco
 
 `src/db/migrations.mjs` contains ordered migrations. `schema_migrations` records each applied version. Both automatic startup and `npm run db:migrate` acquire a database advisory lock, so concurrent deployments cannot apply the same migration twice.
 
-`news.publish_request_id` and `leads.request_id` are unique. News statuses are `draft`, `published`, and `archived`. Lead delivery statuses are `received`, `notification_failed`, and `delivered`.
+`news.publish_request_id` and `leads.request_id` are unique. News statuses are `draft`, `published`, and `archived`. Lead delivery statuses are `received`, `notification_failed`, and `delivered`. Public Leads bot subscriptions are stored in `telegram_lead_subscribers`, so they survive deploys and restarts.
 
 Publishing and restoring serialize in PostgreSQL, make the selected item newest, and archive everything outside the newest three in the same transaction. Duplicate publish IDs return the original item. Duplicate delivered lead IDs do not send Telegram twice. A Telegram delivery failure is committed as `notification_failed`, and the API returns an upstream error rather than fake success.
 
@@ -97,10 +104,12 @@ Publishing and restoring serialize in PostgreSQL, make the selected item newest,
 
 Cloudinary uploads are signed server-side. PostgreSQL stores no binary media. Canceled/expired draft assets are removed where possible; replacement deletes the prior asset only after the new database value is committed.
 
-The CMS Telegram webhook is `${PUBLIC_BASE_URL}/api/telegram/webhook` and is
-protected by `X-Telegram-Bot-Api-Secret-Token`. Only IDs in
-`TELEGRAM_ADMIN_IDS` can use the CMS. The Leads bot has no webhook and sends
-website leads only to `TELEGRAM_LEADS_ADMIN_IDS`.
+The CMS Telegram webhook is `${PUBLIC_BASE_URL}/api/telegram/webhook`; the Leads
+bot webhook is `${PUBLIC_BASE_URL}/api/telegram/leads/webhook`. Both are protected
+by `X-Telegram-Bot-Api-Secret-Token`. Public access is enabled by default: anyone
+who finds the CMS bot can change the Clinic Life section, and anyone who finds
+the Leads bot can subscribe to lead notifications. Set either public-access
+variable to `false` if the bot must return to an explicit administrator list.
 
 Generate a webhook secret without printing other credentials:
 
@@ -115,8 +124,9 @@ node -e "console.log(require('node:crypto').randomBytes(32).toString('base64url'
 3. Verify the CMS bot `/start`, authorization, create/edit/archive/restore, and real Cloudinary media.
 4. Publish A-E and verify `A`; `B,A`; `C,B,A`; `D,C,B`; `E,D,C`.
 5. Confirm the deployed website changes without a frontend redeploy.
-6. Start the separate Leads bot from each recipient account, submit a real lead,
-   and confirm delivery from that bot plus a `delivered` database row.
+6. Start the separate Leads bot from each recipient account, verify `/status`,
+   submit a real lead, and confirm delivery from that bot plus a `delivered`
+   database row.
 
 Do not report Telegram live-message checks as passed until the administrator has started the bot.
 

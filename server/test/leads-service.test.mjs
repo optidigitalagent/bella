@@ -3,13 +3,38 @@ import assert from 'node:assert/strict';
 import { LeadsService } from '../src/services/leads-service.mjs';
 import { MemoryRepository } from './helpers.mjs';
 
-test('lead is only marked delivered after every Telegram admin confirms delivery', async () => {
+test('lead is delivered when at least one active Telegram recipient confirms delivery', async () => {
   const repository = new MemoryRepository();
   const attempted = [];
   const telegram = { sendMessage: async (id) => { attempted.push(id); if (id === '2') throw new Error('delivery failed'); } };
   const service = new LeadsService({ repository, telegram, adminIds: ['1', '2'], idFactory: () => 'l1' });
-  await assert.rejects(service.submit({ name: 'Анна', phone: '+380671234567', comment: '', requestId: 'lead-request' }));
+  await service.submit({ name: 'Анна', phone: '+380671234567', comment: '', requestId: 'lead-request' });
   assert.deepEqual(attempted, ['1', '2']);
+  assert.equal(repository.leads[0].status, 'delivered');
+});
+
+test('lead is sent to configured administrators and public subscribers without duplicates', async () => {
+  const repository = new MemoryRepository({
+    leadSubscribers: [
+      { chat_id: '2', user_id: '2', is_active: true },
+      { chat_id: '3', user_id: '3', is_active: false }
+    ]
+  });
+  const attempted = [];
+  const telegram = { sendMessage: async (id) => { attempted.push(id); } };
+  const service = new LeadsService({ repository, telegram, adminIds: ['1', '2'], idFactory: () => 'l1' });
+  await service.submit({ name: 'Анна', phone: '+380671234567', comment: '', requestId: 'lead-public' });
+  assert.deepEqual(attempted, ['1', '2']);
+});
+
+test('lead fails clearly when there are no active Telegram recipients', async () => {
+  const repository = new MemoryRepository();
+  const telegram = { sendMessage: async () => {} };
+  const service = new LeadsService({ repository, telegram, adminIds: [], idFactory: () => 'l1' });
+  await assert.rejects(
+    service.submit({ name: 'Анна', phone: '+380671234567', comment: '', requestId: 'lead-no-recipient' }),
+    /no active Telegram recipients/
+  );
   assert.equal(repository.leads[0].status, 'notification_failed');
 });
 

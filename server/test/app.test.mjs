@@ -18,6 +18,7 @@ function fixture(overrides = {}) {
     newsService,
     leadsService,
     telegramCms: overrides.telegramCms || { handleUpdate: async () => {} },
+    telegramLeadsBot: overrides.telegramLeadsBot || { handleUpdate: async () => {} },
     healthCheck: overrides.healthCheck,
     logger: { error() {} }
   });
@@ -50,6 +51,7 @@ test('GET /health verifies database connectivity', async () => {
     newsService: {},
     leadsService: {},
     telegramCms: {},
+    telegramLeadsBot: {},
     healthCheck: async () => { throw new Error('database unavailable'); },
     logger: { error() {} }
   });
@@ -89,6 +91,22 @@ test('webhook requires exact Telegram secret token', async () => {
     const unauthorized = await fetch(`${base}/api/telegram/webhook`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
     assert.equal(unauthorized.status, 401);
     const authorized = await fetch(`${base}/api/telegram/webhook`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-telegram-bot-api-secret-token': 'test-secret' }, body: '{}' });
+    assert.equal(authorized.status, 200);
+    assert.equal(handled, 1);
+  });
+});
+
+test('Leads bot webhook uses its own endpoint and secret', async () => {
+  let handled = 0;
+  const { app } = fixture({ telegramLeadsBot: { handleUpdate: async () => { handled++; } } });
+  await withServer(app, async (base) => {
+    const wrongSecret = await fetch(`${base}/api/telegram/leads/webhook`, {
+      method: 'POST', headers: { 'content-type': 'application/json', 'x-telegram-bot-api-secret-token': 'test-secret' }, body: '{}'
+    });
+    assert.equal(wrongSecret.status, 401);
+    const authorized = await fetch(`${base}/api/telegram/leads/webhook`, {
+      method: 'POST', headers: { 'content-type': 'application/json', 'x-telegram-bot-api-secret-token': 'leads-test-secret' }, body: '{}'
+    });
     assert.equal(authorized.status, 200);
     assert.equal(handled, 1);
   });
