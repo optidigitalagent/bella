@@ -1347,7 +1347,8 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
         self.assertIn(b"<body", price_raw)
         price_body = b"<body" + price_raw.split(b"<body", 1)[1]
         canonical_price_body = canonicalize_newlines_to_lf(price_body)
-        approved_price_body_hash = "ec497c6363316582dc89931c6fff850ddea19f0a4eb7eaf05ae17e3af1a51cd6"
+        # BELLA-BINOTEL-001: exact async loader added before </body>; other bytes preserved.
+        approved_price_body_hash = "96832b28bb1c504be68fff7c2beba6b038ed6deb25e05748fbc3410bb8b7a9a8"
         self.assertEqual(
             hashlib.sha256(canonical_price_body).hexdigest(),
             approved_price_body_hash,
@@ -1642,7 +1643,7 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
         self.assertEqual(len(public_records), 56)
         self.assertEqual(
             public_aggregate,
-            "12d0a469213f35dcbeaf42e94f9680a12f63bcce281c647f5368228c3a78928c",
+            "09f76f73cf67c53da70f5ce30235c9726c88aa9d1f1b917f7b36a288732d8fdb",
         )
         candidate_price_object = subprocess.run(
             ["git", "hash-object", "--path=price.html", "price.html"],
@@ -1652,11 +1653,21 @@ class RepositoryTechnicalSeoContractTests(unittest.TestCase):
             text=True,
             encoding="utf-8",
         ).stdout.strip()
-        self.assertEqual(candidate_price_object, "427ed9a7fb745abb066c1e47b64e2e87fe991810")
+        self.assertEqual(candidate_price_object, "65d352e856a95cb6483af5b28862fd036641c4da")
         self.assertNotEqual(
             candidate_price_object,
             "52db00f3a4b7e893ed477bd97c91084f8a590cba",
         )
+
+    def test_binotel_loader_is_exact_and_last_on_every_public_page(self) -> None:
+        snippet = '<script src="https://widgets.binotel.com/chat/widgets/BE2C7Bcn4UIKE7ObWFQV.js" async></script>'
+        for path in self.manifest_entries:
+            if path.endswith(".html"):
+                with self.subTest(path=path):
+                    source = (REPOSITORY_ROOT / path).read_text(encoding="utf-8")
+                    self.assertEqual(source.count(snippet), 1)
+                    self.assertEqual(source.count("widgets.binotel.com/chat/widgets/"), 1)
+                    self.assertIn(snippet + "\n</body>", source)
 
     def test_contact_value_link_css_is_narrowly_scoped(self) -> None:
         source = (REPOSITORY_ROOT / "index.html").read_text(encoding="utf-8", errors="strict")
